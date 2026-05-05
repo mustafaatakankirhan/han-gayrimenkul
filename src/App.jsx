@@ -1,122 +1,85 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import heroImg from './assets/hero.png'
-import './App.css'
+import React, { useEffect, useState } from "react";
+import { db } from "./firebase";
+import { collection, getDocs, addDoc, deleteDoc, doc } from "firebase/firestore";
 
 function App() {
-  const [count, setCount] = useState(0)
+  const [ilanlar, setIlanlar] = useState([]);
+  const [baslik, setBaslik] = useState("");
+
+  // 🔄 Verileri çek
+  useEffect(() => {
+    const getir = async () => {
+      const snapshot = await getDocs(collection(db, "ilanlar"));
+      const data = snapshot.docs.map((d) => ({
+        id: d.id,
+        ...d.data(),
+      }));
+      setIlanlar(data);
+    };
+    getir();
+  }, []);
+
+  // ➕ İlan ekle
+  const ekle = async () => {
+    if (!baslik) return;
+
+    await addDoc(collection(db, "ilanlar"), {
+      title: baslik,
+      price: "Fiyat girilmedi",
+      location: "Sakarya / Karasu",
+      image:
+        "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?q=80&w=1200",
+    });
+
+    setBaslik("");
+    window.location.reload();
+  };
+
+  // ❌ İlan sil
+  const sil = async (id) => {
+    await deleteDoc(doc(db, "ilanlar", id));
+    window.location.reload();
+  };
 
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.jsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
+    <div style={{ background: "#050505", minHeight: "100vh", color: "white", padding: "20px" }}>
+      <h1 style={{ textAlign: "center", color: "#ff8a00" }}>
+        Han Gayrimenkul
+      </h1>
 
-      <div className="ticks"></div>
+      {/* EKLE */}
+      <div style={{ textAlign: "center", marginBottom: "20px" }}>
+        <input
+          value={baslik}
+          onChange={(e) => setBaslik(e.target.value)}
+          placeholder="İlan başlığı gir"
+          style={{ padding: "10px", marginRight: "10px" }}
+        />
+        <button onClick={ekle}>Ekle</button>
+      </div>
 
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
-
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
-  )
+      {/* LİSTE */}
+      <div style={{ display: "flex", flexWrap: "wrap", gap: "20px", justifyContent: "center" }}>
+        {ilanlar.map((ilan) => (
+          <div
+            key={ilan.id}
+            style={{
+              border: "1px solid orange",
+              padding: "10px",
+              borderRadius: "10px",
+              width: "250px",
+            }}
+          >
+            <img src={ilan.image} style={{ width: "100%" }} />
+            <h3>{ilan.title}</h3>
+            <p>{ilan.price}</p>
+            <p>{ilan.location}</p>
+            <button onClick={() => sil(ilan.id)}>Sil</button>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
 }
 
-export default App
+export default App;
