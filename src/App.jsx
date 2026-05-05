@@ -1,13 +1,25 @@
 import React, { useEffect, useState } from "react";
 import { db } from "./firebase";
-import { collection, getDocs, addDoc, deleteDoc, doc } from "firebase/firestore";
+import {
+  collection,
+  getDocs,
+  addDoc,
+  deleteDoc,
+  updateDoc,
+  doc,
+} from "firebase/firestore";
+
+const ADMIN_PASSWORD = "1234";
+const WHATSAPP_NUMBER = "905308954919";
 
 function App() {
   const [ilanlar, setIlanlar] = useState([]);
-  const [adminAcik, setAdminAcik] = useState(false);
+  const [admin, setAdmin] = useState(false);
   const [sifre, setSifre] = useState("");
+  const [duzenlenenId, setDuzenlenenId] = useState(null);
+  const [filtre, setFiltre] = useState("Tümü");
 
-  const [form, setForm] = useState({
+  const bosForm = {
     title: "",
     price: "",
     location: "Sakarya / Karasu / Aziziye Mah.",
@@ -16,55 +28,92 @@ function App() {
     status: "Satılık",
     image: "",
     instagram: "",
-  });
+  };
+
+  const [form, setForm] = useState(bosForm);
+
+  const ilanlariGetir = async () => {
+    const snapshot = await getDocs(collection(db, "ilanlar"));
+    const data = snapshot.docs.map((d) => ({
+      id: d.id,
+      ...d.data(),
+    }));
+    setIlanlar(data);
+  };
 
   useEffect(() => {
-    const getir = async () => {
-      const snapshot = await getDocs(collection(db, "ilanlar"));
-      const data = snapshot.docs.map((d) => ({
-        id: d.id,
-        ...d.data(),
-      }));
-      setIlanlar(data);
-    };
-
-    getir();
+    ilanlariGetir();
   }, []);
 
   const girisYap = () => {
-    if (sifre === "1234") {
-      setAdminAcik(true);
+    if (sifre === ADMIN_PASSWORD) {
+      setAdmin(true);
+      setSifre("");
     } else {
-      alert("Şifre yanlış");
+      alert("Şifre yanlış.");
     }
   };
 
   const ilanEkle = async () => {
     if (!form.title || !form.price || !form.image) {
-      alert("Başlık, fiyat ve foto linki zorunlu.");
+      alert("Başlık, fiyat ve fotoğraf linki zorunlu.");
       return;
     }
 
-    await addDoc(collection(db, "ilanlar"), {
-      ...form,
-      createdAt: new Date(),
-    });
+    if (duzenlenenId) {
+      await updateDoc(doc(db, "ilanlar", duzenlenenId), form);
+      setDuzenlenenId(null);
+    } else {
+      await addDoc(collection(db, "ilanlar"), {
+        ...form,
+        createdAt: new Date(),
+      });
+    }
 
-    window.location.reload();
+    setForm(bosForm);
+    ilanlariGetir();
   };
 
   const ilanSil = async (id) => {
+    const onay = confirm("Bu ilan silinsin mi?");
+    if (!onay) return;
+
     await deleteDoc(doc(db, "ilanlar", id));
-    window.location.reload();
+    ilanlariGetir();
+  };
+
+  const ilanDuzenle = (ilan) => {
+    setForm({
+      title: ilan.title || "",
+      price: ilan.price || "",
+      location: ilan.location || "",
+      rooms: ilan.rooms || "",
+      area: ilan.area || "",
+      status: ilan.status || "Satılık",
+      image: ilan.image || "",
+      instagram: ilan.instagram || "",
+    });
+    setDuzenlenenId(ilan.id);
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const kartaTikla = (ilan) => {
     if (ilan.instagram) {
       window.open(ilan.instagram, "_blank");
     } else {
-      window.open("https://wa.me/905308954919", "_blank");
+      window.open(
+        `https://wa.me/${WHATSAPP_NUMBER}?text=Merhaba,%20${encodeURIComponent(
+          ilan.title
+        )}%20ilanı%20hakkında%20bilgi%20almak%20istiyorum.`,
+        "_blank"
+      );
     }
   };
+
+  const gorunenIlanlar =
+    filtre === "Tümü"
+      ? ilanlar
+      : ilanlar.filter((ilan) => ilan.status === filtre);
 
   return (
     <div style={styles.page}>
@@ -74,41 +123,50 @@ function App() {
           <p style={styles.slogan}>Yatırımınıza güvenle değer</p>
         </div>
 
-        {!adminAcik ? (
-          <div>
-            <input
-              type="password"
-              placeholder="Admin şifre"
-              value={sifre}
-              onChange={(e) => setSifre(e.target.value)}
-              style={styles.passwordInput}
-            />
-            <button onClick={girisYap} style={styles.adminBtn}>
-              Admin Giriş
+        <div style={styles.adminArea}>
+          {!admin ? (
+            <>
+              <input
+                type="password"
+                placeholder="Admin şifre"
+                value={sifre}
+                onChange={(e) => setSifre(e.target.value)}
+                style={styles.passwordInput}
+              />
+              <button onClick={girisYap} style={styles.adminBtn}>
+                Admin Giriş
+              </button>
+            </>
+          ) : (
+            <button onClick={() => setAdmin(false)} style={styles.adminBtn}>
+              Admin Çıkış
             </button>
-          </div>
-        ) : (
-          <button onClick={() => setAdminAcik(false)} style={styles.adminBtn}>
-            Çıkış
-          </button>
-        )}
+          )}
+        </div>
       </header>
 
       <section style={styles.hero}>
-        <p style={styles.badge}>Sakarya / Karasu / Aziziye Mah.</p>
+        <p style={styles.badge}>Sakarya / Karasu / Aziziye Mahallesi</p>
         <h2 style={styles.heroTitle}>Gayrimenkulde güven, yatırımda değer.</h2>
         <p style={styles.heroText}>
           Han Gayrimenkul; satılık, kiralık ve yatırım odaklı portföyleri
-          güvenilir ve profesyonel şekilde sunar.
+          güvenilir, şeffaf ve profesyonel şekilde sunar.
         </p>
-        <a href="https://wa.me/905308954919" target="_blank" rel="noreferrer" style={styles.heroBtn}>
+        <a
+          href={`https://wa.me/${WHATSAPP_NUMBER}?text=Merhaba,%20gayrimenkul%20hakkında%20bilgi%20almak%20istiyorum.`}
+          target="_blank"
+          rel="noreferrer"
+          style={styles.heroBtn}
+        >
           WhatsApp ile İletişime Geç
         </a>
       </section>
 
-      {adminAcik && (
+      {admin && (
         <section style={styles.adminPanel}>
-          <h2 style={{ color: "#ff8a00" }}>İlan Ekle</h2>
+          <h2 style={styles.adminTitle}>
+            {duzenlenenId ? "İlan Düzenle" : "İlan Ekle"}
+          </h2>
 
           <div style={styles.formGrid}>
             <input
@@ -117,35 +175,30 @@ function App() {
               onChange={(e) => setForm({ ...form, title: e.target.value })}
               style={styles.input}
             />
-
             <input
               placeholder="Fiyat örn: 3.500.000 TL"
               value={form.price}
               onChange={(e) => setForm({ ...form, price: e.target.value })}
               style={styles.input}
             />
-
             <input
               placeholder="Konum"
               value={form.location}
               onChange={(e) => setForm({ ...form, location: e.target.value })}
               style={styles.input}
             />
-
             <input
               placeholder="Oda örn: 2+1"
               value={form.rooms}
               onChange={(e) => setForm({ ...form, rooms: e.target.value })}
               style={styles.input}
             />
-
             <input
               placeholder="m² örn: 120"
               value={form.area}
               onChange={(e) => setForm({ ...form, area: e.target.value })}
               style={styles.input}
             />
-
             <select
               value={form.status}
               onChange={(e) => setForm({ ...form, status: e.target.value })}
@@ -154,14 +207,12 @@ function App() {
               <option>Satılık</option>
               <option>Kiralık</option>
             </select>
-
             <input
               placeholder="Fotoğraf direkt linki"
               value={form.image}
               onChange={(e) => setForm({ ...form, image: e.target.value })}
               style={styles.input}
             />
-
             <input
               placeholder="Instagram ilan linki"
               value={form.instagram}
@@ -171,8 +222,20 @@ function App() {
           </div>
 
           <button onClick={ilanEkle} style={styles.addBtn}>
-            İlan Ekle
+            {duzenlenenId ? "İlanı Güncelle" : "İlan Ekle"}
           </button>
+
+          {duzenlenenId && (
+            <button
+              onClick={() => {
+                setDuzenlenenId(null);
+                setForm(bosForm);
+              }}
+              style={styles.cancelBtn}
+            >
+              Vazgeç
+            </button>
+          )}
         </section>
       )}
 
@@ -180,8 +243,24 @@ function App() {
         <p style={styles.sectionLabel}>PORTFÖYLER</p>
         <h2 style={styles.sectionTitle}>Güncel İlanlar</h2>
 
+        <div style={styles.filters}>
+          {["Tümü", "Satılık", "Kiralık"].map((x) => (
+            <button
+              key={x}
+              onClick={() => setFiltre(x)}
+              style={{
+                ...styles.filterBtn,
+                background: filtre === x ? "#ff8a00" : "transparent",
+                color: filtre === x ? "#000" : "#fff",
+              }}
+            >
+              {x}
+            </button>
+          ))}
+        </div>
+
         <div style={styles.cards}>
-          {ilanlar.map((ilan) => (
+          {gorunenIlanlar.map((ilan) => (
             <div key={ilan.id} style={styles.card} onClick={() => kartaTikla(ilan)}>
               <div style={styles.imageWrap}>
                 <img src={ilan.image} alt={ilan.title} style={styles.image} />
@@ -200,7 +279,9 @@ function App() {
 
                 <div style={styles.buttonRow}>
                   <a
-                    href="https://wa.me/905308954919"
+                    href={`https://wa.me/${WHATSAPP_NUMBER}?text=Merhaba,%20${encodeURIComponent(
+                      ilan.title
+                    )}%20ilanı%20hakkında%20bilgi%20almak%20istiyorum.`}
                     target="_blank"
                     rel="noreferrer"
                     onClick={(e) => e.stopPropagation()}
@@ -221,16 +302,27 @@ function App() {
                     </a>
                   )}
 
-                  {adminAcik && (
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        ilanSil(ilan.id);
-                      }}
-                      style={styles.deleteBtn}
-                    >
-                      Sil
-                    </button>
+                  {admin && (
+                    <>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          ilanDuzenle(ilan);
+                        }}
+                        style={styles.editBtn}
+                      >
+                        Düzenle
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          ilanSil(ilan.id);
+                        }}
+                        style={styles.deleteBtn}
+                      >
+                        Sil
+                      </button>
+                    </>
                   )}
                 </div>
               </div>
@@ -261,16 +353,18 @@ const styles = {
     fontFamily: "Arial, sans-serif",
   },
   header: {
-    height: "85px",
-    padding: "0 60px",
+    minHeight: "85px",
+    padding: "18px 60px",
     background: "#000",
     borderBottom: "1px solid rgba(255,255,255,0.12)",
     display: "flex",
     alignItems: "center",
     justifyContent: "space-between",
+    gap: "20px",
     position: "sticky",
     top: 0,
     zIndex: 10,
+    flexWrap: "wrap",
   },
   logo: {
     margin: 0,
@@ -282,13 +376,17 @@ const styles = {
     margin: 0,
     color: "#ddd",
   },
+  adminArea: {
+    display: "flex",
+    gap: "10px",
+    flexWrap: "wrap",
+  },
   passwordInput: {
     padding: "11px",
     borderRadius: "999px",
     border: "1px solid #333",
     background: "#111",
     color: "white",
-    marginRight: "10px",
   },
   adminBtn: {
     padding: "12px 20px",
@@ -309,7 +407,6 @@ const styles = {
   badge: {
     color: "#ff8a00",
     fontWeight: "bold",
-    letterSpacing: "1px",
   },
   heroTitle: {
     maxWidth: "850px",
@@ -341,6 +438,9 @@ const styles = {
     borderRadius: "24px",
     background: "rgba(255,138,0,0.08)",
   },
+  adminTitle: {
+    color: "#ff8a00",
+  },
   formGrid: {
     display: "grid",
     gridTemplateColumns: "repeat(auto-fit, minmax(230px, 1fr))",
@@ -364,6 +464,16 @@ const styles = {
     fontWeight: "900",
     cursor: "pointer",
   },
+  cancelBtn: {
+    marginLeft: "10px",
+    padding: "14px 28px",
+    borderRadius: "999px",
+    border: "1px solid #777",
+    background: "transparent",
+    color: "#fff",
+    fontWeight: "900",
+    cursor: "pointer",
+  },
   listings: {
     padding: "70px 60px",
   },
@@ -375,6 +485,19 @@ const styles = {
   sectionTitle: {
     fontSize: "44px",
     marginTop: "10px",
+  },
+  filters: {
+    display: "flex",
+    gap: "10px",
+    marginBottom: "25px",
+    flexWrap: "wrap",
+  },
+  filterBtn: {
+    padding: "10px 18px",
+    borderRadius: "999px",
+    border: "1px solid #ff8a00",
+    cursor: "pointer",
+    fontWeight: "900",
   },
   cards: {
     display: "grid",
@@ -452,6 +575,15 @@ const styles = {
     color: "white",
     borderRadius: "999px",
     textDecoration: "none",
+    fontWeight: "900",
+  },
+  editBtn: {
+    padding: "11px 18px",
+    background: "#1f6feb",
+    color: "white",
+    border: "none",
+    borderRadius: "999px",
+    cursor: "pointer",
     fontWeight: "900",
   },
   deleteBtn: {
