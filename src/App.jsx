@@ -24,12 +24,13 @@ function App() {
   const bosForm = {
     title: "",
     price: "",
-    location: "Sakarya / Karasu / Aziziye Mah.",
+    location: "Sakarya / Karasu",
     rooms: "",
     area: "",
     status: "Satılık",
     image: "",
     instagram: "",
+    maps: "",
     description: "",
   };
 
@@ -88,12 +89,13 @@ function App() {
     setForm({
       title: ilan.title || "",
       price: ilan.price || "",
-      location: ilan.location || "",
+      location: ilan.location || "Sakarya / Karasu",
       rooms: ilan.rooms || "",
       area: ilan.area || "",
       status: ilan.status || "Satılık",
       image: ilan.image || "",
       instagram: ilan.instagram || "",
+      maps: ilan.maps || "",
       description: ilan.description || "",
     });
     setDuzenlenenId(ilan.id);
@@ -186,7 +188,7 @@ function App() {
           font-size: 20px;
           line-height: 1.7;
         }
-        .heroBtn, .addBtn, .whatsapp, .instagram, .editBtn, .deleteBtn, .cancelBtn {
+        .heroBtn, .addBtn, .whatsapp, .instagram, .mapsBtn, .editBtn, .deleteBtn, .cancelBtn {
           display: inline-block;
           padding: 13px 20px;
           border-radius: 999px;
@@ -322,6 +324,7 @@ function App() {
         }
         .whatsapp { background: #25D366; color: white; }
         .instagram { background: #E1306C; color: white; }
+        .mapsBtn { background: #ff8a00; color: #000; }
         .editBtn { background: #1f6feb; color: white; }
         .deleteBtn { background: #b00020; color: white; }
         .contact {
@@ -432,7 +435,7 @@ function App() {
       </header>
 
       <section className="hero">
-        <p className="badge">Sakarya / Karasu / Aziziye Mahallesi</p>
+        <p className="badge">Sakarya / Karasu</p>
         <h2 className="heroTitle">Gayrimenkulde güven, yatırımda değer.</h2>
         <p className="heroText">
           Han Gayrimenkul; satılık, kiralık ve yatırım odaklı portföyleri
@@ -457,7 +460,7 @@ function App() {
           <div className="formGrid">
             <input placeholder="İlan başlığı" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} className="input" />
             <input placeholder="Fiyat örn: 3.500.000 TL" value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })} className="input" />
-            <input placeholder="Konum" value={form.location} onChange={(e) => setForm({ ...form, location: e.target.value })} className="input" />
+            <input placeholder="Konum yazısı örn: Sakarya / Karasu" value={form.location} onChange={(e) => setForm({ ...form, location: e.target.value })} className="input" />
             <input placeholder="Oda örn: 2+1" value={form.rooms} onChange={(e) => setForm({ ...form, rooms: e.target.value })} className="input" />
             <input placeholder="m² örn: 120" value={form.area} onChange={(e) => setForm({ ...form, area: e.target.value })} className="input" />
 
@@ -468,6 +471,7 @@ function App() {
 
             <input placeholder="Fotoğraf direkt linki" value={form.image} onChange={(e) => setForm({ ...form, image: e.target.value })} className="input" />
             <input placeholder="Instagram ilan linki" value={form.instagram} onChange={(e) => setForm({ ...form, instagram: e.target.value })} className="input" />
+            <input placeholder="Google Maps konum linki" value={form.maps} onChange={(e) => setForm({ ...form, maps: e.target.value })} className="input" />
 
             <textarea
               placeholder="İlan açıklaması"
@@ -556,6 +560,18 @@ function App() {
                     </a>
                   )}
 
+                  {ilan.maps && (
+                    <a
+                      href={ilan.maps}
+                      target="_blank"
+                      rel="noreferrer"
+                      onClick={(e) => e.stopPropagation()}
+                      className="mapsBtn"
+                    >
+                      Konumu Gör
+                    </a>
+                  )}
+
                   {admin && (
                     <>
                       <button
@@ -622,6 +638,12 @@ function App() {
                     </a>
                   )}
 
+                  {seciliIlan.maps && (
+                    <a href={seciliIlan.maps} target="_blank" rel="noreferrer" className="mapsBtn">
+                      Google Maps’te Konumu Gör
+                    </a>
+                  )}
+
                   {admin && (
                     <>
                       <button onClick={() => ilanDuzenle(seciliIlan)} className="editBtn">
@@ -643,7 +665,7 @@ function App() {
         <h2>İletişim</h2>
         <p>Telefon: 0530 895 4919</p>
         <p>E-posta: {EMAIL}</p>
-        <p>Adres: Sakarya / Karasu / Aziziye Mah.</p>
+        <p>Adres: Sakarya / Karasu</p>
       </section>
 
       <footer className="footer">
