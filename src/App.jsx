@@ -12,10 +12,10 @@ import {
 const ADMIN_PASSWORD = "1234";
 
 const CONTACTS = {
-  officePhone: "0530 895 4919",
+  officePhone: "0530 895 49 19",
   secondOfficePhone: "0532 593 37 16",
   mustafaName: "Mustafa Atakan Kırhan",
-  mustafaPhone: "0530 895 4919",
+  mustafaPhone: "0530 895 49 19",
   muzafferName: "Muzaffer Kırhan",
   muzafferPhone: "0532 593 37 16",
   email: "hangayrimenkulkarasu@gmail.com",
@@ -24,6 +24,23 @@ const CONTACTS = {
   tiktok: "https://www.tiktok.com/@han_gayrimenkul",
   facebook: "https://www.facebook.com/hangayrimenkulkarasu",
 };
+
+function TurkishFlag() {
+  return (
+    <div className="flagBox" title="Türk Bayrağı">
+      <svg viewBox="0 0 1200 800" className="flagSvg" aria-label="Türk Bayrağı">
+        <rect width="1200" height="800" fill="#E30A17" />
+        <circle cx="425" cy="400" r="200" fill="#fff" />
+        <circle cx="475" cy="400" r="160" fill="#E30A17" />
+        <polygon
+          fill="#fff"
+          points="680,400 625.6,417.7 625.6,474.9 592,428.6 537.6,446.3 571.2,400 537.6,353.7 592,371.4 625.6,325.1 625.6,382.3"
+          transform="scale(1.35) translate(-110,-105)"
+        />
+      </svg>
+    </div>
+  );
+}
 
 function App() {
   const [ilanlar, setIlanlar] = useState([]);
@@ -206,22 +223,26 @@ function App() {
           cursor: pointer;
         }
 
-        .flag {
-          width: 88px;
-          height: 58px;
-          background: #e30a17;
-          border-radius: 2px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-size: 34px;
+        .flagBox {
+          width: 92px;
+          height: 62px;
+          border-radius: 4px;
+          overflow: hidden;
           box-shadow: 0 14px 30px rgba(0,0,0,.45);
-          animation: wave 1.8s ease-in-out infinite;
+          border: 1px solid rgba(255,255,255,.22);
+          animation: flagWave 2s ease-in-out infinite;
+          background: #e30a17;
         }
 
-        @keyframes wave {
-          0%, 100% { transform: rotate(-2deg) scale(1); }
-          50% { transform: rotate(3deg) scale(1.04); }
+        .flagSvg {
+          width: 100%;
+          height: 100%;
+          display: block;
+        }
+
+        @keyframes flagWave {
+          0%, 100% { transform: rotate(-1.5deg) scale(1); }
+          50% { transform: rotate(2deg) scale(1.035); }
         }
 
         .heroContent {
@@ -652,7 +673,7 @@ function App() {
           .header { padding: 20px 22px; }
           .brandName { font-size: 30px; }
           .brandSlogan { font-size: 18px; }
-          .flag { width: 68px; height: 46px; font-size: 26px; }
+          .flagBox { width: 72px; height: 48px; }
           .heroContent { padding: 45px 22px 75px; }
           .heroTitle { letter-spacing: -1px; }
           .listings { padding: 55px 22px 30px; }
@@ -690,7 +711,7 @@ function App() {
                 </button>
               )}
             </div>
-            <div className="flag">☪</div>
+            <TurkishFlag />
           </div>
         </header>
 
