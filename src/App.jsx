@@ -1,352 +1,801 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
+import { db } from "./firebase";
+import {
+  collection,
+  getDocs,
+  addDoc,
+  deleteDoc,
+  updateDoc,
+  doc,
+} from "firebase/firestore";
+
+const ADMIN_PASSWORD = "1234";
+
+const CONTACTS = {
+  officePhone: "0530 895 4919",
+  mustafaName: "Mustafa Atakan Kırhan",
+  mustafaPhone: "0530 895 4919",
+  muzafferName: "Muzaffer Kırhan",
+  muzafferPhone: "0532 593 37 16",
+  email: "hangayrimenkulkarasu@gmail.com",
+  whatsapp: "905308954919",
+  instagram: "https://www.instagram.com/hangayrimenkulkarasu/?hl=tr",
+  tiktok: "https://www.tiktok.com/@han_gayrimenkul",
+  facebook: "https://www.facebook.com/hangayrimenkulkarasu",
+};
 
 function App() {
+  const [ilanlar, setIlanlar] = useState([]);
+  const [admin, setAdmin] = useState(false);
+  const [sifre, setSifre] = useState("");
+  const [filtre, setFiltre] = useState("Tümü");
+  const [seciliIlan, setSeciliIlan] = useState(null);
+  const [duzenlenenId, setDuzenlenenId] = useState(null);
+
+  const bosForm = {
+    title: "",
+    price: "",
+    location: "Sakarya / Karasu",
+    rooms: "",
+    area: "",
+    status: "Satılık",
+    image: "",
+    instagram: "",
+    maps: "",
+    description: "",
+  };
+
+  const [form, setForm] = useState(bosForm);
+
+  const ilanlariGetir = async () => {
+    const snapshot = await getDocs(collection(db, "ilanlar"));
+    const data = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
+    setIlanlar(data);
+  };
+
+  useEffect(() => {
+    ilanlariGetir();
+  }, []);
+
+  const whatsappLink = (ilan) =>
+    `https://wa.me/${CONTACTS.whatsapp}?text=Merhaba,%20${encodeURIComponent(
+      ilan?.title || "gayrimenkul"
+    )}%20ilanı%20hakkında%20bilgi%20almak%20istiyorum.`;
+
+  const girisYap = () => {
+    if (sifre === ADMIN_PASSWORD) {
+      setAdmin(true);
+      setSifre("");
+    } else {
+      alert("Şifre yanlış.");
+    }
+  };
+
+  const ilanKaydet = async () => {
+    if (!form.title || !form.price || !form.image) {
+      alert("Başlık, fiyat ve fotoğraf linki zorunlu.");
+      return;
+    }
+
+    if (duzenlenenId) {
+      await updateDoc(doc(db, "ilanlar", duzenlenenId), form);
+      setDuzenlenenId(null);
+    } else {
+      await addDoc(collection(db, "ilanlar"), {
+        ...form,
+        createdAt: new Date(),
+      });
+    }
+
+    setForm(bosForm);
+    ilanlariGetir();
+  };
+
+  const ilanSil = async (id) => {
+    if (!confirm("Bu ilan silinsin mi?")) return;
+    await deleteDoc(doc(db, "ilanlar", id));
+    setSeciliIlan(null);
+    ilanlariGetir();
+  };
+
+  const ilanDuzenle = (ilan) => {
+    setForm({
+      title: ilan.title || "",
+      price: ilan.price || "",
+      location: ilan.location || "Sakarya / Karasu",
+      rooms: ilan.rooms || "",
+      area: ilan.area || "",
+      status: ilan.status || "Satılık",
+      image: ilan.image || "",
+      instagram: ilan.instagram || "",
+      maps: ilan.maps || "",
+      description: ilan.description || "",
+    });
+    setDuzenlenenId(ilan.id);
+    setSeciliIlan(null);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const gorunenIlanlar =
+    filtre === "Tümü"
+      ? ilanlar
+      : ilanlar.filter((ilan) => ilan.status === filtre);
+
   return (
-    <div
-      style={{
-        minHeight: "100vh",
-        background: "#050505",
-        color: "white",
-        fontFamily: "Arial, sans-serif",
-      }}
-    >
-      {/* HEADER */}
-      <header
-        style={{
-          padding: "20px 7%",
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          borderBottom: "1px solid rgba(255,255,255,.1)",
-          background: "rgba(0,0,0,.8)",
-          position: "sticky",
-          top: 0,
-          backdropFilter: "blur(12px)",
-          zIndex: 100,
-        }}
-      >
-        <div>
-          <h1
-            style={{
-              margin: 0,
-              color: "#ff8a00",
-              fontSize: "34px",
-              fontWeight: "900",
-            }}
-          >
-            Han Gayrimenkul
-          </h1>
-
-          <p
-            style={{
-              margin: "4px 0 0",
-              color: "#ddd",
-              fontSize: "14px",
-            }}
-          >
-            Doğru yatırım, güvenle değer katar
-          </p>
-        </div>
-
-        <a
-          href="https://wa.me/905308954919"
-          target="_blank"
-          rel="noreferrer"
-          style={{
-            background: "#25D366",
-            color: "white",
-            padding: "12px 20px",
-            borderRadius: "999px",
-            textDecoration: "none",
-            fontWeight: "bold",
-          }}
-        >
-          WhatsApp
-        </a>
-      </header>
-
-      {/* HERO */}
-      <section
-        style={{
-          padding: "120px 7%",
+    <div className="page">
+      <style>{`
+        * { box-sizing: border-box; }
+        body { margin: 0; background: #050505; }
+        .page {
+          min-height: 100vh;
+          background: radial-gradient(circle at top, #101418 0%, #050505 45%, #030303 100%);
+          color: white;
+          font-family: Arial, sans-serif;
+        }
+        .topHero {
+          min-height: 720px;
           background:
-            "linear-gradient(to right, rgba(0,0,0,.9), rgba(0,0,0,.45)), url('https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?q=80&w=2000&auto=format&fit=crop')",
-          backgroundSize: "cover",
-          backgroundPosition: "center",
-        }}
-      >
-        <span
-          style={{
-            display: "inline-block",
-            padding: "10px 18px",
-            borderRadius: "999px",
-            background: "rgba(255,138,0,.12)",
-            border: "1px solid rgba(255,138,0,.4)",
-            color: "#ff8a00",
-            fontWeight: "bold",
-          }}
-        >
-          Sakarya / Karasu
-        </span>
+            linear-gradient(to bottom, rgba(0,0,0,.35), rgba(0,0,0,.92)),
+            linear-gradient(to right, rgba(0,0,0,.72), rgba(0,0,0,.35)),
+            url("https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?q=80&w=2200&auto=format&fit=crop");
+          background-size: cover;
+          background-position: center;
+          position: relative;
+          border-bottom: 1px solid rgba(255,138,0,.28);
+        }
+        .header {
+          padding: 26px 7%;
+          display: flex;
+          justify-content: space-between;
+          align-items: flex-start;
+          gap: 20px;
+          flex-wrap: wrap;
+        }
+        .brandName {
+          margin: 0;
+          color: #ff8a00;
+          font-size: 36px;
+          font-weight: 900;
+          letter-spacing: -.5px;
+        }
+        .brandPhones {
+          display: flex;
+          align-items: flex-start;
+          gap: 12px;
+          margin-top: 10px;
+          color: #fff;
+          font-weight: 900;
+          font-size: 17px;
+          line-height: 1.45;
+        }
+        .phoneIcon { color: #ff8a00; font-size: 26px; }
+        .headerRight {
+          display: flex;
+          align-items: center;
+          gap: 24px;
+          flex-wrap: wrap;
+        }
+        .adminArea {
+          display: flex;
+          gap: 10px;
+          flex-wrap: wrap;
+          align-items: center;
+        }
+        .passwordInput {
+          padding: 12px 15px;
+          border-radius: 999px;
+          border: 1px solid rgba(255,138,0,.45);
+          background: rgba(0,0,0,.4);
+          color: white;
+          outline: none;
+        }
+        .adminBtn {
+          padding: 13px 24px;
+          border-radius: 999px;
+          border: 1px solid #ff8a00;
+          background: rgba(0,0,0,.38);
+          color: white;
+          font-weight: 900;
+          cursor: pointer;
+        }
+        .flag {
+          font-size: 66px;
+          animation: wave 1.8s ease-in-out infinite;
+          transform-origin: center;
+          filter: drop-shadow(0 10px 20px rgba(0,0,0,.45));
+        }
+        @keyframes wave {
+          0%, 100% { transform: rotate(-2deg) scale(1); }
+          50% { transform: rotate(3deg) scale(1.04); }
+        }
+        .heroContent {
+          text-align: center;
+          padding: 50px 7% 100px;
+          max-width: 1100px;
+          margin: 0 auto;
+        }
+        .badge {
+          display: inline-block;
+          padding: 13px 30px;
+          border-radius: 999px;
+          border: 1px solid rgba(255,138,0,.75);
+          background: rgba(255,138,0,.10);
+          color: #ff8a00;
+          font-weight: 900;
+          font-size: 20px;
+        }
+        .heroTitle {
+          margin: 34px auto 25px;
+          max-width: 1000px;
+          font-size: clamp(48px, 8vw, 92px);
+          line-height: 1.02;
+          font-weight: 950;
+          letter-spacing: -3px;
+          text-shadow: 0 10px 30px rgba(0,0,0,.55);
+        }
+        .divider {
+          width: 150px;
+          height: 3px;
+          background: linear-gradient(to right, transparent, #ff8a00, transparent);
+          margin: 0 auto 24px;
+          position: relative;
+        }
+        .divider::after {
+          content: "";
+          position: absolute;
+          left: 50%;
+          top: 50%;
+          width: 13px;
+          height: 13px;
+          background: #ff8a00;
+          border-radius: 50%;
+          transform: translate(-50%, -50%);
+        }
+        .heroText {
+          max-width: 760px;
+          margin: 0 auto;
+          color: #eee;
+          font-size: 21px;
+          line-height: 1.7;
+        }
+        .heroBtn {
+          display: inline-flex;
+          align-items: center;
+          gap: 10px;
+          margin-top: 34px;
+          padding: 17px 34px;
+          background: #ff8a00;
+          color: #000;
+          border-radius: 999px;
+          border: 2px solid white;
+          text-decoration: none;
+          font-weight: 950;
+          font-size: 18px;
+          box-shadow: 0 15px 35px rgba(255,138,0,.25);
+        }
+        .adminPanel {
+          max-width: 1160px;
+          margin: 45px auto 0;
+          padding: 32px;
+          border-radius: 28px;
+          border: 1px solid rgba(255,138,0,.42);
+          background: linear-gradient(135deg, rgba(255,138,0,.12), rgba(255,255,255,.05));
+        }
+        .adminTitle { color: #ff8a00; margin-top: 0; }
+        .formGrid {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+          gap: 13px;
+        }
+        .input, .textarea {
+          padding: 14px;
+          border-radius: 14px;
+          border: 1px solid #333;
+          background: #111;
+          color: white;
+          outline: none;
+          width: 100%;
+        }
+        .textarea {
+          min-height: 110px;
+          resize: vertical;
+          grid-column: 1 / -1;
+        }
+        .addBtn, .cancelBtn {
+          display: inline-block;
+          margin-top: 18px;
+          padding: 14px 26px;
+          border-radius: 999px;
+          border: none;
+          cursor: pointer;
+          font-weight: 900;
+        }
+        .addBtn { background: #ff8a00; color: #000; }
+        .cancelBtn {
+          margin-left: 10px;
+          background: transparent;
+          color: white;
+          border: 1px solid #777;
+        }
+        .listings {
+          padding: 70px 7% 40px;
+        }
+        .sectionLabel {
+          text-align: center;
+          color: #ff8a00;
+          font-weight: 950;
+          letter-spacing: 1px;
+          margin: 0;
+        }
+        .sectionTitle {
+          text-align: center;
+          font-size: 44px;
+          margin: 10px 0 20px;
+        }
+        .filters {
+          display: flex;
+          justify-content: center;
+          gap: 22px;
+          flex-wrap: wrap;
+          margin-bottom: 34px;
+        }
+        .filterBtn {
+          min-width: 95px;
+          padding: 13px 22px;
+          border-radius: 14px;
+          border: 1px solid rgba(255,255,255,.35);
+          background: transparent;
+          color: white;
+          cursor: pointer;
+          font-weight: 900;
+        }
+        .cards {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(310px, 1fr));
+          gap: 30px;
+        }
+        .card {
+          background: rgba(255,255,255,.055);
+          border: 1px solid rgba(255,255,255,.12);
+          border-radius: 16px;
+          overflow: hidden;
+          cursor: pointer;
+          transition: .25s ease;
+          box-shadow: 0 18px 45px rgba(0,0,0,.30);
+        }
+        .card:hover {
+          transform: translateY(-7px);
+          border-color: rgba(255,138,0,.75);
+        }
+        .imageWrap {
+          height: 240px;
+          position: relative;
+          overflow: hidden;
+        }
+        .image {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+          transition: .4s ease;
+        }
+        .card:hover .image { transform: scale(1.05); }
+        .status {
+          position: absolute;
+          top: 14px;
+          left: 14px;
+          padding: 8px 13px;
+          border-radius: 999px;
+          background: #ff8a00;
+          color: #000;
+          font-weight: 950;
+        }
+        .cardBody { padding: 22px; }
+        .location { color: #bbb; font-size: 14px; }
+        .cardTitle {
+          font-size: 21px;
+          line-height: 1.3;
+          min-height: 54px;
+          margin: 12px 0;
+        }
+        .price {
+          color: #ff8a00;
+          font-size: 27px;
+          font-weight: 950;
+          margin: 12px 0;
+        }
+        .details {
+          display: flex;
+          gap: 10px;
+          flex-wrap: wrap;
+          margin: 14px 0;
+        }
+        .details span {
+          padding: 7px 10px;
+          border-radius: 9px;
+          border: 1px solid rgba(255,255,255,.18);
+          color: #eee;
+          font-size: 13px;
+        }
+        .buttonRow {
+          display: flex;
+          gap: 8px;
+          flex-wrap: wrap;
+          padding-top: 15px;
+          border-top: 1px solid rgba(255,255,255,.10);
+        }
+        .whatsapp, .instagram, .mapsBtn, .editBtn, .deleteBtn {
+          padding: 10px 13px;
+          border-radius: 10px;
+          text-decoration: none;
+          color: white;
+          font-weight: 900;
+          font-size: 13px;
+          border: none;
+          cursor: pointer;
+        }
+        .whatsapp { background: rgba(37,211,102,.18); border: 1px solid rgba(37,211,102,.45); }
+        .instagram { background: rgba(225,48,108,.18); border: 1px solid rgba(225,48,108,.45); }
+        .mapsBtn { background: rgba(255,138,0,.18); border: 1px solid rgba(255,138,0,.55); }
+        .editBtn { background: #1f6feb; }
+        .deleteBtn { background: #b00020; }
+        .moreBtnWrap { text-align: center; margin-top: 40px; }
+        .moreBtn {
+          display: inline-block;
+          padding: 16px 40px;
+          border-radius: 999px;
+          color: white;
+          border: 1px solid #ff8a00;
+          text-decoration: none;
+          font-weight: 900;
+        }
+        .contact {
+          margin: 30px 7% 0;
+          padding: 55px 20px;
+          border-top: 1px solid rgba(255,255,255,.12);
+          text-align: center;
+        }
+        .contactTitle {
+          font-size: 42px;
+          margin: 0 0 35px;
+        }
+        .contactGrid {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+          gap: 28px;
+          align-items: start;
+        }
+        .contactItem {
+          padding: 10px 18px;
+          border-right: 1px solid rgba(255,255,255,.16);
+        }
+        .contactItem:last-child { border-right: none; }
+        .contactName { color: white; margin: 0 0 8px; }
+        .contactPhone {
+          color: #ff8a00;
+          margin: 4px 0;
+          font-weight: 950;
+          font-size: 18px;
+        }
+        .emailText { color: white; word-break: break-word; }
+        .follow {
+          margin-top: 35px;
+          padding-top: 28px;
+          border-top: 1px solid rgba(255,255,255,.12);
+        }
+        .followTitle {
+          display: inline-block;
+          margin-bottom: 18px;
+          font-weight: 900;
+          color: #ddd;
+        }
+        .socials {
+          display: flex;
+          justify-content: center;
+          gap: 20px;
+          flex-wrap: wrap;
+        }
+        .socialBtn {
+          min-width: 160px;
+          padding: 13px 25px;
+          border-radius: 999px;
+          border: 1px solid #ff8a00;
+          color: white;
+          text-decoration: none;
+          font-weight: 900;
+        }
+        .footer {
+          padding: 30px;
+          text-align: center;
+          color: #aaa;
+        }
+        .footer strong { color: #ff8a00; }
+        .modalBackdrop {
+          position: fixed;
+          inset: 0;
+          z-index: 999;
+          background: rgba(0,0,0,.82);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          padding: 24px;
+        }
+        .modal {
+          width: min(1100px, 100%);
+          max-height: 92vh;
+          overflow: auto;
+          background: #0b0b0b;
+          border: 1px solid rgba(255,138,0,.5);
+          border-radius: 28px;
+          box-shadow: 0 30px 90px rgba(0,0,0,.7);
+        }
+        .modalGrid {
+          display: grid;
+          grid-template-columns: 1.1fr .9fr;
+        }
+        .modalImg {
+          width: 100%;
+          height: 100%;
+          min-height: 520px;
+          object-fit: cover;
+        }
+        .modalContent { padding: 34px; position: relative; }
+        .closeBtn {
+          float: right;
+          background: transparent;
+          color: white;
+          border: 1px solid #666;
+          border-radius: 999px;
+          padding: 8px 14px;
+          cursor: pointer;
+        }
+        .modalTitle {
+          font-size: 34px;
+          line-height: 1.2;
+          margin: 42px 0 12px;
+        }
+        .modalPrice {
+          color: #ff8a00;
+          font-size: 34px;
+          font-weight: 950;
+        }
+        .modalDesc {
+          color: #ccc;
+          line-height: 1.7;
+          font-size: 16px;
+        }
+        @media (max-width: 800px) {
+          .topHero { min-height: auto; }
+          .header { padding: 20px 22px; }
+          .brandName { font-size: 30px; }
+          .flag { font-size: 48px; }
+          .heroContent { padding: 45px 22px 75px; }
+          .heroTitle { letter-spacing: -1px; }
+          .listings { padding: 55px 22px 30px; }
+          .modalGrid { grid-template-columns: 1fr; }
+          .modalImg { min-height: 300px; }
+          .buttonRow a, .buttonRow button { flex: 1; text-align: center; }
+          .contactItem { border-right: none; border-bottom: 1px solid rgba(255,255,255,.12); padding-bottom: 22px; }
+        }
+      `}</style>
 
-        <h2
-          style={{
-            fontSize: "clamp(42px,7vw,78px)",
-            lineHeight: "1.05",
-            maxWidth: "900px",
-            marginTop: "20px",
-            marginBottom: "20px",
-            fontWeight: "900",
-          }}
-        >
-          Gayrimenkulde güven,
-          <br />
-          yatırımda değer.
-        </h2>
+      <section className="topHero">
+        <header className="header">
+          <div>
+            <h1 className="brandName">Han Gayrimenkul</h1>
+            <div className="brandPhones">
+              <span className="phoneIcon">☎</span>
+              <div>
+                <div>{CONTACTS.officePhone}</div>
+                <div>{CONTACTS.muzafferPhone}</div>
+              </div>
+            </div>
+          </div>
 
-        <p
-          style={{
-            maxWidth: "700px",
-            color: "#ddd",
-            lineHeight: "1.8",
-            fontSize: "20px",
-          }}
-        >
-          Han Gayrimenkul; satılık, kiralık ve yatırım odaklı
-          portföyleri güvenilir, şeffaf ve profesyonel şekilde sunar.
-        </p>
+          <div className="headerRight">
+            <div className="adminArea">
+              {!admin ? (
+                <>
+                  <input
+                    type="password"
+                    placeholder="Admin şifre"
+                    value={sifre}
+                    onChange={(e) => setSifre(e.target.value)}
+                    className="passwordInput"
+                  />
+                  <button onClick={girisYap} className="adminBtn">Admin Giriş</button>
+                </>
+              ) : (
+                <button onClick={() => setAdmin(false)} className="adminBtn">Admin Çıkış</button>
+              )}
+            </div>
+            <div className="flag">🇹🇷</div>
+          </div>
+        </header>
 
-        <a
-          href="https://wa.me/905308954919"
-          target="_blank"
-          rel="noreferrer"
-          style={{
-            display: "inline-block",
-            marginTop: "30px",
-            background: "#ff8a00",
-            color: "#000",
-            padding: "16px 28px",
-            borderRadius: "999px",
-            textDecoration: "none",
-            fontWeight: "900",
-          }}
-        >
-          Hemen İletişime Geç
-        </a>
+        <div className="heroContent">
+          <span className="badge">Sakarya / Karasu</span>
+          <h2 className="heroTitle">Gayrimenkulde güven, yatırımda değer.</h2>
+          <div className="divider"></div>
+          <p className="heroText">
+            Han Gayrimenkul; satılık, kiralık ve yatırım odaklı portföyleri
+            güvenilir, şeffaf ve profesyonel şekilde sunar.
+          </p>
+          <a href={`https://wa.me/${CONTACTS.whatsapp}`} target="_blank" rel="noreferrer" className="heroBtn">
+            🟢 Hemen İletişime Geç
+          </a>
+        </div>
       </section>
 
-      {/* İLANLAR */}
-      <section
-        style={{
-          padding: "70px 7%",
-        }}
-      >
-        <p
-          style={{
-            color: "#ff8a00",
-            letterSpacing: "4px",
-            fontWeight: "900",
-          }}
-        >
-          PORTFÖYLER
-        </p>
+      {admin && (
+        <section className="adminPanel">
+          <h2 className="adminTitle">{duzenlenenId ? "İlan Düzenle" : "İlan Ekle"}</h2>
 
-        <h2
-          style={{
-            fontSize: "44px",
-            marginTop: "10px",
-          }}
-        >
-          Güncel İlanlar
-        </h2>
+          <div className="formGrid">
+            <input className="input" placeholder="İlan başlığı" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />
+            <input className="input" placeholder="Fiyat örn: 3.500.000 TL" value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })} />
+            <input className="input" placeholder="Konum" value={form.location} onChange={(e) => setForm({ ...form, location: e.target.value })} />
+            <input className="input" placeholder="Oda örn: 2+1" value={form.rooms} onChange={(e) => setForm({ ...form, rooms: e.target.value })} />
+            <input className="input" placeholder="m² örn: 120" value={form.area} onChange={(e) => setForm({ ...form, area: e.target.value })} />
+            <select className="input" value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value })}>
+              <option>Satılık</option>
+              <option>Kiralık</option>
+            </select>
+            <input className="input" placeholder="Fotoğraf direkt linki" value={form.image} onChange={(e) => setForm({ ...form, image: e.target.value })} />
+            <input className="input" placeholder="Instagram ilan linki" value={form.instagram} onChange={(e) => setForm({ ...form, instagram: e.target.value })} />
+            <input className="input" placeholder="Google Maps konum linki" value={form.maps} onChange={(e) => setForm({ ...form, maps: e.target.value })} />
+            <textarea className="textarea" placeholder="İlan açıklaması" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
+          </div>
 
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fit,minmax(320px,1fr))",
-            gap: "28px",
-            marginTop: "40px",
-          }}
-        >
-          {/* KART */}
-          <div
-            style={{
-              background: "rgba(255,255,255,.05)",
-              border: "1px solid rgba(255,138,0,.35)",
-              borderRadius: "30px",
-              overflow: "hidden",
-              transition: ".3s",
-            }}
-          >
-            <div
+          <button className="addBtn" onClick={ilanKaydet}>
+            {duzenlenenId ? "İlanı Güncelle" : "İlan Ekle"}
+          </button>
+
+          {duzenlenenId && (
+            <button className="cancelBtn" onClick={() => { setDuzenlenenId(null); setForm(bosForm); }}>
+              Vazgeç
+            </button>
+          )}
+        </section>
+      )}
+
+      <section className="listings">
+        <p className="sectionLabel">PORTFÖYLERİMİZ</p>
+        <h2 className="sectionTitle">Güncel İlanlar</h2>
+
+        <div className="filters">
+          {["Tümü", "Satılık", "Kiralık"].map((x) => (
+            <button
+              key={x}
+              className="filterBtn"
+              onClick={() => setFiltre(x)}
               style={{
-                height: "250px",
-                overflow: "hidden",
-                position: "relative",
+                background: filtre === x ? "#ff8a00" : "transparent",
+                color: filtre === x ? "#000" : "#fff",
+                borderColor: filtre === x ? "#ff8a00" : "rgba(255,255,255,.35)",
               }}
             >
-              <img
-                src="https://images.unsplash.com/photo-1568605114967-8130f3a36994?q=80&w=1200"
-                alt=""
-                style={{
-                  width: "100%",
-                  height: "100%",
-                  objectFit: "cover",
-                }}
-              />
+              {x}
+            </button>
+          ))}
+        </div>
 
-              <span
-                style={{
-                  position: "absolute",
-                  top: "15px",
-                  left: "15px",
-                  background: "#ff8a00",
-                  color: "#000",
-                  padding: "8px 14px",
-                  borderRadius: "999px",
-                  fontWeight: "900",
-                }}
-              >
-                Satılık
-              </span>
-            </div>
-
-            <div
-              style={{
-                padding: "24px",
-              }}
-            >
-              <p
-                style={{
-                  color: "#aaa",
-                }}
-              >
-                Sakarya / Karasu
-              </p>
-
-              <h3
-                style={{
-                  fontSize: "26px",
-                  margin: "10px 0",
-                }}
-              >
-                Deniz Manzaralı 3+1 Lüks Villa
-              </h3>
-
-              <p
-                style={{
-                  color: "#ff8a00",
-                  fontSize: "30px",
-                  fontWeight: "900",
-                }}
-              >
-                6.750.000 TL
-              </p>
-
-              <div
-                style={{
-                  display: "flex",
-                  gap: "10px",
-                  flexWrap: "wrap",
-                  marginTop: "14px",
-                }}
-              >
-                <span
-                  style={{
-                    background: "rgba(255,255,255,.08)",
-                    padding: "8px 12px",
-                    borderRadius: "12px",
-                  }}
-                >
-                  3+1
-                </span>
-
-                <span
-                  style={{
-                    background: "rgba(255,255,255,.08)",
-                    padding: "8px 12px",
-                    borderRadius: "12px",
-                  }}
-                >
-                  240 m²
-                </span>
+        <div className="cards">
+          {gorunenIlanlar.map((ilan) => (
+            <div className="card" key={ilan.id} onClick={() => setSeciliIlan(ilan)}>
+              <div className="imageWrap">
+                <img className="image" src={ilan.image} alt={ilan.title} />
+                <span className="status">{ilan.status || "Satılık"}</span>
               </div>
 
-              <div
-                style={{
-                  display: "flex",
-                  gap: "10px",
-                  marginTop: "22px",
-                  flexWrap: "wrap",
-                }}
-              >
-                <a
-                  href="https://wa.me/905308954919"
-                  target="_blank"
-                  rel="noreferrer"
-                  style={{
-                    background: "#25D366",
-                    color: "white",
-                    padding: "12px 18px",
-                    borderRadius: "999px",
-                    textDecoration: "none",
-                    fontWeight: "bold",
-                  }}
-                >
-                  WhatsApp
-                </a>
+              <div className="cardBody">
+                <p className="location">📍 {ilan.location}</p>
+                <h3 className="cardTitle">{ilan.title}</h3>
+                <p className="price">{ilan.price}</p>
 
-                <a
-                  href="https://maps.google.com"
-                  target="_blank"
-                  rel="noreferrer"
-                  style={{
-                    background: "#ff8a00",
-                    color: "#000",
-                    padding: "12px 18px",
-                    borderRadius: "999px",
-                    textDecoration: "none",
-                    fontWeight: "bold",
-                  }}
-                >
-                  Konumu Gör
-                </a>
+                <div className="details">
+                  {ilan.rooms && <span>🏠 {ilan.rooms}</span>}
+                  {ilan.area && <span>📐 {ilan.area} m²</span>}
+                </div>
+
+                <div className="buttonRow">
+                  <a href={whatsappLink(ilan)} target="_blank" rel="noreferrer" onClick={(e) => e.stopPropagation()} className="whatsapp">WhatsApp</a>
+                  {ilan.instagram && <a href={ilan.instagram} target="_blank" rel="noreferrer" onClick={(e) => e.stopPropagation()} className="instagram">Instagram</a>}
+                  {ilan.maps && <a href={ilan.maps} target="_blank" rel="noreferrer" onClick={(e) => e.stopPropagation()} className="mapsBtn">Konumu Gör</a>}
+                  {admin && (
+                    <>
+                      <button className="editBtn" onClick={(e) => { e.stopPropagation(); ilanDuzenle(ilan); }}>Düzenle</button>
+                      <button className="deleteBtn" onClick={(e) => { e.stopPropagation(); ilanSil(ilan.id); }}>Sil</button>
+                    </>
+                  )}
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <div className="moreBtnWrap">
+          <a href="#contact" className="moreBtn">Tüm ilanlar için iletişime geç →</a>
+        </div>
+      </section>
+
+      {seciliIlan && (
+        <div className="modalBackdrop" onClick={() => setSeciliIlan(null)}>
+          <div className="modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modalGrid">
+              <img className="modalImg" src={seciliIlan.image} alt={seciliIlan.title} />
+              <div className="modalContent">
+                <button className="closeBtn" onClick={() => setSeciliIlan(null)}>Kapat</button>
+                <h2 className="modalTitle">{seciliIlan.title}</h2>
+                <p className="location">📍 {seciliIlan.location}</p>
+                <p className="modalPrice">{seciliIlan.price}</p>
+
+                <div className="details">
+                  {seciliIlan.rooms && <span>🏠 {seciliIlan.rooms}</span>}
+                  {seciliIlan.area && <span>📐 {seciliIlan.area} m²</span>}
+                  {seciliIlan.status && <span>{seciliIlan.status}</span>}
+                </div>
+
+                <p className="modalDesc">
+                  {seciliIlan.description || "Bu ilan hakkında detaylı bilgi almak için WhatsApp üzerinden bizimle iletişime geçebilirsiniz."}
+                </p>
+
+                <div className="buttonRow">
+                  <a href={whatsappLink(seciliIlan)} target="_blank" rel="noreferrer" className="whatsapp">WhatsApp ile Bilgi Al</a>
+                  {seciliIlan.instagram && <a href={seciliIlan.instagram} target="_blank" rel="noreferrer" className="instagram">Instagram’da Gör</a>}
+                  {seciliIlan.maps && <a href={seciliIlan.maps} target="_blank" rel="noreferrer" className="mapsBtn">Google Maps’te Aç</a>}
+                  {admin && (
+                    <>
+                      <button className="editBtn" onClick={() => ilanDuzenle(seciliIlan)}>Düzenle</button>
+                      <button className="deleteBtn" onClick={() => ilanSil(seciliIlan.id)}>Sil</button>
+                    </>
+                  )}
+                </div>
               </div>
             </div>
           </div>
         </div>
+      )}
+
+      <section id="contact" className="contact">
+        <h2 className="contactTitle">İletişim</h2>
+
+        <div className="contactGrid">
+          <div className="contactItem">
+            <p className="contactName">☎ Han Gayrimenkul</p>
+            <p className="contactPhone">{CONTACTS.officePhone}</p>
+            <p className="contactPhone">{CONTACTS.muzafferPhone}</p>
+          </div>
+
+          <div className="contactItem">
+            <p className="contactName">☎ {CONTACTS.mustafaName}</p>
+            <p className="contactPhone">{CONTACTS.mustafaPhone}</p>
+          </div>
+
+          <div className="contactItem">
+            <p className="contactName">☎ {CONTACTS.muzafferName}</p>
+            <p className="contactPhone">{CONTACTS.muzafferPhone}</p>
+          </div>
+
+          <div className="contactItem">
+            <p className="contactName">✉ E-posta</p>
+            <p className="emailText">{CONTACTS.email}</p>
+          </div>
+        </div>
+
+        <p style={{ marginTop: 28, fontSize: 18 }}>📍 Sakarya / Karasu</p>
+
+        <div className="follow">
+          <span className="followTitle">Bizi Takip Edin</span>
+          <div className="socials">
+            <a className="socialBtn" href={CONTACTS.instagram} target="_blank" rel="noreferrer">📸 Instagram</a>
+            <a className="socialBtn" href={CONTACTS.tiktok} target="_blank" rel="noreferrer">🎵 TikTok</a>
+            <a className="socialBtn" href={CONTACTS.facebook} target="_blank" rel="noreferrer">🔵 Facebook</a>
+          </div>
+        </div>
       </section>
 
-      {/* İLETİŞİM */}
-      <section
-        style={{
-          margin: "40px 7%",
-          padding: "40px",
-          borderRadius: "28px",
-          background:
-            "linear-gradient(135deg, rgba(255,138,0,.12), rgba(255,255,255,.04))",
-          border: "1px solid rgba(255,255,255,.1)",
-        }}
-      >
-        <h2>İletişim</h2>
-
-        <p>Telefon: 0530 895 4919</p>
-
-        <p>E-posta: hangayrimenkulkarasu@gmail.com</p>
-
-        <p>Konum: Sakarya / Karasu</p>
-      </section>
-
-      {/* FOOTER */}
-      <footer
-        style={{
-          padding: "35px",
-          textAlign: "center",
-          borderTop: "1px solid rgba(255,255,255,.1)",
-          color: "#777",
-        }}
-      >
-        © 2026 Han Gayrimenkul — Doğru yatırım, güvenle değer katar
+      <footer className="footer">
+        © 2026 <strong>Han Gayrimenkul</strong> — Doğru yatırım, güvenle değer katar
       </footer>
     </div>
   );
