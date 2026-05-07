@@ -1065,31 +1065,45 @@ function App() {
             transform: none;
           }
 
-          .modalBackdrop {
-            padding: 10px;
-            align-items: center;
-          }
+         .modalBackdrop {
+  padding: 8px;
+  align-items: flex-start;
+  overflow-y: auto;
+}
 
-          .modal {
-            width: 100%;
-            max-height: 94vh;
-            border-radius: 22px;
-          }
+.modal {
+  width: 100%;
+  max-height: none;
+  min-height: auto;
+  border-radius: 20px;
+  margin-top: 10px;
+}
 
-          .modalGrid {
-            grid-template-columns: 1fr;
-          }
+.modalGrid {
+  grid-template-columns: 1fr;
+}
 
-          .modalGallery {
-            padding: 12px 12px 4px;
-          }
+.modalGallery {
+  padding: 10px;
+}
 
-          .modalImg {
-            height: min(56vh, 430px);
-            max-height: 430px;
-            object-fit: contain;
-            background: #050505;
-            border-radius: 18px;
+.sliderFrame {
+  height: 42vh;
+  min-height: 260px;
+  max-height: 360px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modalImg {
+  width: 100%;
+  height: 100%;
+  max-height: 360px;
+  object-fit: contain;
+  background: #050505;
+  border-radius: 16px;
+}
           }
 
           .galleryArrow {
@@ -1101,29 +1115,41 @@ function App() {
           .arrowLeft { left: 10px; }
           .arrowRight { right: 10px; }
 
-          .thumbs {
-            display: flex;
-            overflow-x: auto;
-            padding-bottom: 6px;
-            margin-top: 12px;
-            gap: 10px;
+         .thumbs {
+  display: flex;
+  overflow-x: auto;
+  padding-bottom: 6px;
+  margin-top: 10px;
+  gap: 8px;
+}
+
+.thumb {
+  min-width: 68px;
+  width: 68px;
+  height: 54px;
+  border-radius: 10px;
+}
           }
 
-          .thumb {
-            min-width: 76px;
-          }
+         .modalContent {
+  padding: 12px 18px 20px;
+}
 
-          .modalContent {
-            padding: 18px 22px 24px;
-          }
+.modalTitle {
+  margin-top: 10px;
+  font-size: 24px;
+  line-height: 1.15;
+}
 
-          .modalTitle {
-            margin-top: 12px;
-            font-size: 28px;
-          }
+.modalPrice {
+  font-size: 26px;
+  margin: 10px 0;
+}
 
-          .modalPrice {
-            font-size: 30px;
+.modalDesc {
+  font-size: 15px;
+  line-height: 1.55;
+}
           }
 
           .details {
