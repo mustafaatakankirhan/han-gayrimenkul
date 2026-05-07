@@ -25,10 +25,26 @@ const CONTACTS = {
   facebook: "https://www.facebook.com/hangayrimenkulkarasu",
 };
 
+function WhatsAppIcon() {
+  return <span className="iconCircle whatsappIcon">☎</span>;
+}
+
+function InstagramIcon() {
+  return <span className="iconCircle instagramIcon">◎</span>;
+}
+
+function FacebookIcon() {
+  return <span className="iconCircle facebookIcon">f</span>;
+}
+
+function TikTokIcon() {
+  return <span className="iconCircle tiktokIcon">♪</span>;
+}
+
 function TurkishFlag() {
   return (
     <div className="flagBox" title="Türk Bayrağı">
-      <svg viewBox="0 0 1200 800" className="flagSvg" aria-label="Türk Bayrağı">
+      <svg viewBox="0 0 1200 800" className="flagSvg">
         <rect width="1200" height="800" fill="#E30A17" />
         <circle cx="425" cy="400" r="200" fill="#fff" />
         <circle cx="475" cy="400" r="160" fill="#E30A17" />
@@ -304,7 +320,7 @@ function App() {
         .heroBtn {
           display: inline-flex;
           align-items: center;
-          gap: 10px;
+          gap: 12px;
           margin-top: 34px;
           padding: 17px 34px;
           background: #ff8a00;
@@ -315,6 +331,45 @@ function App() {
           font-weight: 950;
           font-size: 18px;
           box-shadow: 0 15px 35px rgba(255,138,0,.25);
+        }
+
+        .iconCircle {
+          width: 23px;
+          height: 23px;
+          min-width: 23px;
+          border-radius: 50%;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          font-weight: 950;
+          line-height: 1;
+        }
+
+        .whatsappIcon {
+          background: #25D366;
+          color: white;
+          font-size: 14px;
+        }
+
+        .instagramIcon {
+          background: radial-gradient(circle at 30% 110%, #feda75 0%, #fa7e1e 25%, #d62976 50%, #962fbf 75%, #4f5bd5 100%);
+          color: white;
+          font-size: 18px;
+        }
+
+        .facebookIcon {
+          background: #4267B2;
+          color: white;
+          font-size: 19px;
+          font-family: Arial, sans-serif;
+        }
+
+        .tiktokIcon {
+          background: #000;
+          color: white;
+          border: 1px solid rgba(255,255,255,.25);
+          font-size: 18px;
+          text-shadow: 1px 1px 0 #ff0050, -1px -1px 0 #00f2ea;
         }
 
         .adminPanel {
@@ -500,6 +555,9 @@ function App() {
           font-size: 13px;
           border: none;
           cursor: pointer;
+          display: inline-flex;
+          align-items: center;
+          gap: 7px;
         }
 
         .whatsapp { background: rgba(37,211,102,.18); border: 1px solid rgba(37,211,102,.45); }
@@ -588,13 +646,17 @@ function App() {
         }
 
         .socialBtn {
-          min-width: 160px;
+          min-width: 165px;
           padding: 13px 25px;
           border-radius: 999px;
           border: 1px solid #ff8a00;
           color: white;
           text-decoration: none;
           font-weight: 900;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          gap: 9px;
         }
 
         .footer {
@@ -679,7 +741,7 @@ function App() {
           .listings { padding: 55px 22px 30px; }
           .modalGrid { grid-template-columns: 1fr; }
           .modalImg { min-height: 300px; }
-          .buttonRow a, .buttonRow button { flex: 1; text-align: center; }
+          .buttonRow a, .buttonRow button { flex: 1; text-align: center; justify-content: center; }
         }
       `}</style>
 
@@ -729,6 +791,7 @@ function App() {
             rel="noreferrer"
             className="heroBtn"
           >
+            <WhatsAppIcon />
             WhatsApp ile Hemen İletişime Geç
           </a>
         </div>
@@ -806,9 +869,22 @@ function App() {
                 </div>
 
                 <div className="buttonRow">
-                  <a href={whatsappLink(ilan)} target="_blank" rel="noreferrer" onClick={(e) => e.stopPropagation()} className="whatsapp">WhatsApp</a>
-                  {ilan.instagram && <a href={ilan.instagram} target="_blank" rel="noreferrer" onClick={(e) => e.stopPropagation()} className="instagram">Instagram</a>}
-                  {ilan.maps && <a href={ilan.maps} target="_blank" rel="noreferrer" onClick={(e) => e.stopPropagation()} className="mapsBtn">Konumu Gör</a>}
+                  <a href={whatsappLink(ilan)} target="_blank" rel="noreferrer" onClick={(e) => e.stopPropagation()} className="whatsapp">
+                    <WhatsAppIcon /> WhatsApp
+                  </a>
+
+                  {ilan.instagram && (
+                    <a href={ilan.instagram} target="_blank" rel="noreferrer" onClick={(e) => e.stopPropagation()} className="instagram">
+                      <InstagramIcon /> Instagram
+                    </a>
+                  )}
+
+                  {ilan.maps && (
+                    <a href={ilan.maps} target="_blank" rel="noreferrer" onClick={(e) => e.stopPropagation()} className="mapsBtn">
+                      Konumu Gör
+                    </a>
+                  )}
+
                   {admin && (
                     <>
                       <button className="editBtn" onClick={(e) => { e.stopPropagation(); ilanDuzenle(ilan); }}>Düzenle</button>
@@ -848,9 +924,20 @@ function App() {
                 </p>
 
                 <div className="buttonRow">
-                  <a href={whatsappLink(seciliIlan)} target="_blank" rel="noreferrer" className="whatsapp">WhatsApp ile Bilgi Al</a>
-                  {seciliIlan.instagram && <a href={seciliIlan.instagram} target="_blank" rel="noreferrer" className="instagram">Instagram’da Gör</a>}
-                  {seciliIlan.maps && <a href={seciliIlan.maps} target="_blank" rel="noreferrer" className="mapsBtn">Google Maps’te Aç</a>}
+                  <a href={whatsappLink(seciliIlan)} target="_blank" rel="noreferrer" className="whatsapp">
+                    <WhatsAppIcon /> WhatsApp ile Bilgi Al
+                  </a>
+
+                  {seciliIlan.instagram && (
+                    <a href={seciliIlan.instagram} target="_blank" rel="noreferrer" className="instagram">
+                      <InstagramIcon /> Instagram’da Gör
+                    </a>
+                  )}
+
+                  {seciliIlan.maps && (
+                    <a href={seciliIlan.maps} target="_blank" rel="noreferrer" className="mapsBtn">Google Maps’te Aç</a>
+                  )}
+
                   {admin && (
                     <>
                       <button className="editBtn" onClick={() => ilanDuzenle(seciliIlan)}>Düzenle</button>
@@ -899,9 +986,15 @@ function App() {
         <div className="follow">
           <span className="followTitle">Bizi Takip Edin</span>
           <div className="socials">
-            <a className="socialBtn" href={CONTACTS.instagram} target="_blank" rel="noreferrer">Instagram</a>
-            <a className="socialBtn" href={CONTACTS.tiktok} target="_blank" rel="noreferrer">TikTok</a>
-            <a className="socialBtn" href={CONTACTS.facebook} target="_blank" rel="noreferrer">Facebook</a>
+            <a className="socialBtn" href={CONTACTS.instagram} target="_blank" rel="noreferrer">
+              <InstagramIcon /> Instagram
+            </a>
+            <a className="socialBtn" href={CONTACTS.tiktok} target="_blank" rel="noreferrer">
+              <TikTokIcon /> TikTok
+            </a>
+            <a className="socialBtn" href={CONTACTS.facebook} target="_blank" rel="noreferrer">
+              <FacebookIcon /> Facebook
+            </a>
           </div>
         </div>
       </section>
