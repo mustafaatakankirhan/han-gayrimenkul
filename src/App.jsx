@@ -790,14 +790,16 @@ function App() {
           position: relative;
           overflow: hidden;
           border-radius: 20px;
-          background: #111;
+          background: #050505;
         }
 
         .modalImg {
           width: 100%;
           height: 520px;
-          object-fit: cover;
+          object-fit: contain;
+          border-radius: 20px;
           display: block;
+          background: #050505;
           animation: slidePhoto .24s ease;
         }
 
@@ -1079,11 +1081,14 @@ function App() {
           }
 
           .modalGallery {
-            padding: 12px;
+            padding: 12px 12px 4px;
           }
 
           .modalImg {
-            height: 330px;
+            height: min(56vh, 430px);
+            max-height: 430px;
+            object-fit: contain;
+            background: #050505;
             border-radius: 18px;
           }
 
@@ -1100,6 +1105,8 @@ function App() {
             display: flex;
             overflow-x: auto;
             padding-bottom: 6px;
+            margin-top: 12px;
+            gap: 10px;
           }
 
           .thumb {
@@ -1107,15 +1114,20 @@ function App() {
           }
 
           .modalContent {
-            padding: 22px;
+            padding: 18px 22px 24px;
           }
 
           .modalTitle {
+            margin-top: 12px;
             font-size: 28px;
           }
 
           .modalPrice {
             font-size: 30px;
+          }
+
+          .details {
+            margin-top: 10px;
           }
 
           .buttonRow a,
@@ -1196,6 +1208,7 @@ function App() {
             <input className="input" placeholder="Konum" value={form.location} onChange={(e) => setForm({ ...form, location: e.target.value })} />
             <input className="input" placeholder="Oda örn: 2+1" value={form.rooms} onChange={(e) => setForm({ ...form, rooms: e.target.value })} />
             <input className="input" placeholder="m² örn: 120" value={form.area} onChange={(e) => setForm({ ...form, area: e.target.value })} />
+
             <select className="input" value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value })}>
               <option>Satılık</option>
               <option>Kiralık</option>
