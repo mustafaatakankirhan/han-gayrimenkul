@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { db } from "./firebase";
 import {
   collection,
@@ -60,7 +60,11 @@ function App() {
   const [filtre, setFiltre] = useState("Tümü");
   const [seciliIlan, setSeciliIlan] = useState(null);
   const [aktifFoto, setAktifFoto] = useState(0);
+  const [fotoYon, setFotoYon] = useState("right");
   const [duzenlenenId, setDuzenlenenId] = useState(null);
+
+  const scrollRef = useRef(0);
+  const touchStartX = useRef(null);
 
   const bosForm = {
     title: "",
@@ -86,6 +90,18 @@ function App() {
   useEffect(() => {
     ilanlariGetir();
   }, []);
+
+  useEffect(() => {
+    if (seciliIlan) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "auto";
+    }
+
+    return () => {
+      document.body.style.overflow = "auto";
+    };
+  }, [seciliIlan]);
 
   const fotoListesi = (ilan) => {
     return (ilan.image || "")
@@ -152,13 +168,63 @@ function App() {
     });
 
     setDuzenlenenId(ilan.id);
-    setSeciliIlan(null);
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    kapatModal();
+    setTimeout(() => {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }, 80);
   };
 
   const ilanAc = (ilan) => {
+    scrollRef.current = window.scrollY;
     setSeciliIlan(ilan);
     setAktifFoto(0);
+    setFotoYon("right");
+  };
+
+  const kapatModal = () => {
+    setSeciliIlan(null);
+    setTimeout(() => {
+      window.scrollTo({ top: scrollRef.current, behavior: "instant" });
+    }, 50);
+  };
+
+  const fotoDegistir = (index) => {
+    if (index === aktifFoto) return;
+    setFotoYon(index > aktifFoto ? "right" : "left");
+    setAktifFoto(index);
+  };
+
+  const oncekiFoto = () => {
+    if (!seciliIlan) return;
+    const fotolar = fotoListesi(seciliIlan);
+    if (fotolar.length < 2) return;
+    setFotoYon("left");
+    setAktifFoto((prev) => (prev === 0 ? fotolar.length - 1 : prev - 1));
+  };
+
+  const sonrakiFoto = () => {
+    if (!seciliIlan) return;
+    const fotolar = fotoListesi(seciliIlan);
+    if (fotolar.length < 2) return;
+    setFotoYon("right");
+    setAktifFoto((prev) => (prev === fotolar.length - 1 ? 0 : prev + 1));
+  };
+
+  const dokunmaBasla = (e) => {
+    touchStartX.current = e.touches[0].clientX;
+  };
+
+  const dokunmaBitir = (e) => {
+    if (touchStartX.current === null) return;
+    const endX = e.changedTouches[0].clientX;
+    const fark = touchStartX.current - endX;
+
+    if (Math.abs(fark) > 45) {
+      if (fark > 0) sonrakiFoto();
+      else oncekiFoto();
+    }
+
+    touchStartX.current = null;
   };
 
   const gorunenIlanlar =
@@ -449,6 +515,12 @@ function App() {
           color: white;
           cursor: pointer;
           font-weight: 900;
+          transition: .2s ease;
+        }
+
+        .filterBtn:hover {
+          transform: translateY(-2px);
+          border-color: #ff8a00;
         }
 
         .cards {
@@ -682,7 +754,7 @@ function App() {
           position: fixed;
           inset: 0;
           z-index: 999;
-          background: rgba(0,0,0,.82);
+          background: rgba(0,0,0,.86);
           display: flex;
           align-items: center;
           justify-content: center;
@@ -697,6 +769,12 @@ function App() {
           border: 1px solid rgba(255,138,0,.5);
           border-radius: 28px;
           box-shadow: 0 30px 90px rgba(0,0,0,.7);
+          animation: modalIn .18s ease;
+        }
+
+        @keyframes modalIn {
+          from { opacity: 0; transform: translateY(12px) scale(.98); }
+          to { opacity: 1; transform: translateY(0) scale(1); }
         }
 
         .modalGrid {
@@ -708,12 +786,87 @@ function App() {
           padding: 18px;
         }
 
+        .sliderFrame {
+          position: relative;
+          overflow: hidden;
+          border-radius: 20px;
+          background: #111;
+        }
+
         .modalImg {
           width: 100%;
           height: 520px;
           object-fit: cover;
-          border-radius: 20px;
           display: block;
+          animation: slidePhoto .24s ease;
+        }
+
+        @keyframes slidePhoto {
+          from {
+            opacity: .55;
+            transform: translateX(var(--slide-start, 20px)) scale(1.01);
+          }
+          to {
+            opacity: 1;
+            transform: translateX(0) scale(1);
+          }
+        }
+
+        .galleryArrow {
+          position: absolute;
+          top: 50%;
+          transform: translateY(-50%);
+          width: 46px;
+          height: 46px;
+          border-radius: 50%;
+          border: 1px solid rgba(255,255,255,.35);
+          background: rgba(0,0,0,.55);
+          color: white;
+          font-size: 32px;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          z-index: 3;
+          transition: .2s ease;
+          backdrop-filter: blur(8px);
+        }
+
+        .galleryArrow:hover {
+          background: rgba(255,138,0,.9);
+          color: #000;
+        }
+
+        .arrowLeft { left: 14px; }
+        .arrowRight { right: 14px; }
+
+        .photoDots {
+          position: absolute;
+          bottom: 14px;
+          left: 50%;
+          transform: translateX(-50%);
+          display: flex;
+          gap: 8px;
+          padding: 8px 12px;
+          border-radius: 999px;
+          background: rgba(0,0,0,.45);
+          backdrop-filter: blur(8px);
+          z-index: 4;
+        }
+
+        .photoDot {
+          width: 9px;
+          height: 9px;
+          border-radius: 999px;
+          border: none;
+          background: rgba(255,255,255,.45);
+          cursor: pointer;
+          transition: .2s ease;
+        }
+
+        .photoDot.active {
+          width: 27px;
+          background: #ff8a00;
         }
 
         .thumbs {
@@ -729,7 +882,13 @@ function App() {
           object-fit: cover;
           cursor: pointer;
           border: 2px solid transparent;
-          opacity: .75;
+          opacity: .72;
+          transition: .2s ease;
+        }
+
+        .thumb:hover {
+          opacity: 1;
+          transform: translateY(-2px);
         }
 
         .thumb.active {
@@ -904,12 +1063,59 @@ function App() {
             transform: none;
           }
 
+          .modalBackdrop {
+            padding: 10px;
+            align-items: center;
+          }
+
+          .modal {
+            width: 100%;
+            max-height: 94vh;
+            border-radius: 22px;
+          }
+
           .modalGrid {
             grid-template-columns: 1fr;
           }
 
+          .modalGallery {
+            padding: 12px;
+          }
+
           .modalImg {
-            height: 320px;
+            height: 330px;
+            border-radius: 18px;
+          }
+
+          .galleryArrow {
+            width: 42px;
+            height: 42px;
+            font-size: 28px;
+          }
+
+          .arrowLeft { left: 10px; }
+          .arrowRight { right: 10px; }
+
+          .thumbs {
+            display: flex;
+            overflow-x: auto;
+            padding-bottom: 6px;
+          }
+
+          .thumb {
+            min-width: 76px;
+          }
+
+          .modalContent {
+            padding: 22px;
+          }
+
+          .modalTitle {
+            font-size: 28px;
+          }
+
+          .modalPrice {
+            font-size: 30px;
           }
 
           .buttonRow a,
@@ -1108,15 +1314,46 @@ function App() {
       </section>
 
       {seciliIlan && (
-        <div className="modalBackdrop" onClick={() => setSeciliIlan(null)}>
+        <div className="modalBackdrop" onClick={kapatModal}>
           <div className="modal" onClick={(e) => e.stopPropagation()}>
             <div className="modalGrid">
               <div className="modalGallery">
-                <img
-                  className="modalImg"
-                  src={seciliFotolar[aktifFoto] || ilkFoto(seciliIlan)}
-                  alt={seciliIlan.title}
-                />
+                <div
+                  className="sliderFrame"
+                  onTouchStart={dokunmaBasla}
+                  onTouchEnd={dokunmaBitir}
+                  style={{
+                    "--slide-start": fotoYon === "right" ? "35px" : "-35px",
+                  }}
+                >
+                  <img
+                    key={aktifFoto}
+                    className="modalImg"
+                    src={seciliFotolar[aktifFoto] || ilkFoto(seciliIlan)}
+                    alt={seciliIlan.title}
+                  />
+
+                  {seciliFotolar.length > 1 && (
+                    <>
+                      <button className="galleryArrow arrowLeft" onClick={oncekiFoto}>
+                        ‹
+                      </button>
+                      <button className="galleryArrow arrowRight" onClick={sonrakiFoto}>
+                        ›
+                      </button>
+
+                      <div className="photoDots">
+                        {seciliFotolar.map((_, index) => (
+                          <button
+                            key={index}
+                            className={`photoDot ${aktifFoto === index ? "active" : ""}`}
+                            onClick={() => fotoDegistir(index)}
+                          />
+                        ))}
+                      </div>
+                    </>
+                  )}
+                </div>
 
                 {seciliFotolar.length > 1 && (
                   <div className="thumbs">
@@ -1126,7 +1363,7 @@ function App() {
                         src={foto}
                         alt={`Fotoğraf ${index + 1}`}
                         className={`thumb ${aktifFoto === index ? "active" : ""}`}
-                        onClick={() => setAktifFoto(index)}
+                        onClick={() => fotoDegistir(index)}
                       />
                     ))}
                   </div>
@@ -1134,7 +1371,7 @@ function App() {
               </div>
 
               <div className="modalContent">
-                <button className="closeBtn" onClick={() => setSeciliIlan(null)}>
+                <button className="closeBtn" onClick={kapatModal}>
                   Kapat
                 </button>
 
