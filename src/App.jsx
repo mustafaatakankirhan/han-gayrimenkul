@@ -25,25 +25,20 @@ const CONTACTS = {
   facebook: "https://www.facebook.com/hangayrimenkulkarasu",
 };
 
-function WhatsAppIcon() {
-  return <span className="iconCircle whatsappIcon">☎</span>;
-}
+const ICONS = {
+  whatsapp: "https://img.icons8.com/color/48/whatsapp--v1.png",
+  instagram: "https://img.icons8.com/fluency/48/instagram-new.png",
+  facebook: "https://img.icons8.com/color/48/facebook-new.png",
+  tiktok: "https://img.icons8.com/color/48/tiktok--v1.png",
+};
 
-function InstagramIcon() {
-  return <span className="iconCircle instagramIcon">◎</span>;
-}
-
-function FacebookIcon() {
-  return <span className="iconCircle facebookIcon">f</span>;
-}
-
-function TikTokIcon() {
-  return <span className="iconCircle tiktokIcon">♪</span>;
+function LogoIcon({ type }) {
+  return <img src={ICONS[type]} alt={type} className="logoIcon" />;
 }
 
 function TurkishFlag() {
   return (
-    <div className="flagBox" title="Türk Bayrağı">
+    <div className="flagBox">
       <svg viewBox="0 0 1200 800" className="flagSvg">
         <rect width="1200" height="800" fill="#E30A17" />
         <circle cx="425" cy="400" r="200" fill="#fff" />
@@ -64,6 +59,7 @@ function App() {
   const [sifre, setSifre] = useState("");
   const [filtre, setFiltre] = useState("Tümü");
   const [seciliIlan, setSeciliIlan] = useState(null);
+  const [aktifFoto, setAktifFoto] = useState(0);
   const [duzenlenenId, setDuzenlenenId] = useState(null);
 
   const bosForm = {
@@ -91,6 +87,15 @@ function App() {
     ilanlariGetir();
   }, []);
 
+  const fotoListesi = (ilan) => {
+    return (ilan.image || "")
+      .split(",")
+      .map((x) => x.trim())
+      .filter(Boolean);
+  };
+
+  const ilkFoto = (ilan) => fotoListesi(ilan)[0] || "";
+
   const whatsappLink = (ilan) =>
     `https://wa.me/${CONTACTS.whatsapp}?text=Merhaba,%20${encodeURIComponent(
       ilan?.title || "gayrimenkul"
@@ -107,7 +112,7 @@ function App() {
 
   const ilanKaydet = async () => {
     if (!form.title || !form.price || !form.image) {
-      alert("Başlık, fiyat ve fotoğraf linki zorunlu.");
+      alert("Başlık, fiyat ve en az 1 fotoğraf linki zorunlu.");
       return;
     }
 
@@ -151,10 +156,17 @@ function App() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
+  const ilanAc = (ilan) => {
+    setSeciliIlan(ilan);
+    setAktifFoto(0);
+  };
+
   const gorunenIlanlar =
     filtre === "Tümü"
       ? ilanlar
       : ilanlar.filter((ilan) => ilan.status === filtre);
+
+  const seciliFotolar = seciliIlan ? fotoListesi(seciliIlan) : [];
 
   return (
     <div className="page">
@@ -333,43 +345,11 @@ function App() {
           box-shadow: 0 15px 35px rgba(255,138,0,.25);
         }
 
-        .iconCircle {
-          width: 23px;
-          height: 23px;
-          min-width: 23px;
-          border-radius: 50%;
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-          font-weight: 950;
-          line-height: 1;
-        }
-
-        .whatsappIcon {
-          background: #25D366;
-          color: white;
-          font-size: 14px;
-        }
-
-        .instagramIcon {
-          background: radial-gradient(circle at 30% 110%, #feda75 0%, #fa7e1e 25%, #d62976 50%, #962fbf 75%, #4f5bd5 100%);
-          color: white;
-          font-size: 18px;
-        }
-
-        .facebookIcon {
-          background: #4267B2;
-          color: white;
-          font-size: 19px;
-          font-family: Arial, sans-serif;
-        }
-
-        .tiktokIcon {
-          background: #000;
-          color: white;
-          border: 1px solid rgba(255,255,255,.25);
-          font-size: 18px;
-          text-shadow: 1px 1px 0 #ff0050, -1px -1px 0 #00f2ea;
+        .logoIcon {
+          width: 22px;
+          height: 22px;
+          object-fit: contain;
+          display: inline-block;
         }
 
         .adminPanel {
@@ -403,6 +383,13 @@ function App() {
           min-height: 110px;
           resize: vertical;
           grid-column: 1 / -1;
+        }
+
+        .hint {
+          grid-column: 1 / -1;
+          color: #bbb;
+          font-size: 13px;
+          margin-top: -5px;
         }
 
         .addBtn, .cancelBtn {
@@ -468,16 +455,20 @@ function App() {
         .card {
           background: rgba(255,255,255,.055);
           border: 1px solid rgba(255,255,255,.12);
-          border-radius: 16px;
+          border-radius: 18px;
           overflow: hidden;
           cursor: pointer;
-          transition: .25s ease;
+          transition: transform .28s ease, box-shadow .28s ease, border-color .28s ease, background .28s ease;
           box-shadow: 0 18px 45px rgba(0,0,0,.30);
+          transform: scale(1);
         }
 
         .card:hover {
-          transform: translateY(-7px);
-          border-color: rgba(255,138,0,.75);
+          transform: scale(1.045) translateY(-8px);
+          border-color: rgba(255,138,0,.85);
+          background: rgba(255,255,255,.075);
+          box-shadow: 0 32px 80px rgba(255,138,0,.13);
+          z-index: 2;
         }
 
         .imageWrap {
@@ -490,10 +481,25 @@ function App() {
           width: 100%;
           height: 100%;
           object-fit: cover;
-          transition: .4s ease;
+          transition: transform .45s ease;
         }
 
-        .card:hover .image { transform: scale(1.05); }
+        .card:hover .image {
+          transform: scale(1.11);
+        }
+
+        .photoCount {
+          position: absolute;
+          right: 14px;
+          top: 14px;
+          padding: 8px 12px;
+          border-radius: 999px;
+          background: rgba(0,0,0,.62);
+          border: 1px solid rgba(255,255,255,.22);
+          color: white;
+          font-size: 13px;
+          font-weight: 900;
+        }
 
         .status {
           position: absolute;
@@ -679,7 +685,7 @@ function App() {
         }
 
         .modal {
-          width: min(1100px, 100%);
+          width: min(1180px, 100%);
           max-height: 92vh;
           overflow: auto;
           background: #0b0b0b;
@@ -690,14 +696,40 @@ function App() {
 
         .modalGrid {
           display: grid;
-          grid-template-columns: 1.1fr .9fr;
+          grid-template-columns: 1.12fr .88fr;
+        }
+
+        .modalGallery {
+          padding: 18px;
         }
 
         .modalImg {
           width: 100%;
-          height: 100%;
-          min-height: 520px;
+          height: 520px;
           object-fit: cover;
+          border-radius: 20px;
+          display: block;
+        }
+
+        .thumbs {
+          margin-top: 14px;
+          display: grid;
+          grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+          gap: 10px;
+        }
+
+        .thumb {
+          height: 70px;
+          border-radius: 12px;
+          object-fit: cover;
+          cursor: pointer;
+          border: 2px solid transparent;
+          opacity: .75;
+        }
+
+        .thumb.active {
+          border-color: #ff8a00;
+          opacity: 1;
         }
 
         .modalContent { padding: 34px; position: relative; }
@@ -740,7 +772,7 @@ function App() {
           .heroTitle { letter-spacing: -1px; }
           .listings { padding: 55px 22px 30px; }
           .modalGrid { grid-template-columns: 1fr; }
-          .modalImg { min-height: 300px; }
+          .modalImg { height: 320px; }
           .buttonRow a, .buttonRow button { flex: 1; text-align: center; justify-content: center; }
         }
       `}</style>
@@ -791,7 +823,7 @@ function App() {
             rel="noreferrer"
             className="heroBtn"
           >
-            <WhatsAppIcon />
+            <LogoIcon type="whatsapp" />
             WhatsApp ile Hemen İletişime Geç
           </a>
         </div>
@@ -799,7 +831,9 @@ function App() {
 
       {admin && (
         <section className="adminPanel">
-          <h2 className="adminTitle">{duzenlenenId ? "İlan Düzenle" : "İlan Ekle"}</h2>
+          <h2 className="adminTitle">
+            {duzenlenenId ? "İlan Düzenle" : "İlan Ekle"}
+          </h2>
 
           <div className="formGrid">
             <input className="input" placeholder="İlan başlığı" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />
@@ -811,7 +845,18 @@ function App() {
               <option>Satılık</option>
               <option>Kiralık</option>
             </select>
-            <input className="input" placeholder="Fotoğraf direkt linki" value={form.image} onChange={(e) => setForm({ ...form, image: e.target.value })} />
+
+            <input
+              className="input"
+              placeholder="Fotoğraf linkleri: link1, link2, link3"
+              value={form.image}
+              onChange={(e) => setForm({ ...form, image: e.target.value })}
+            />
+
+            <p className="hint">
+              Birden fazla fotoğraf için linkleri virgülle ayır: https://foto1.jpg, https://foto2.jpg
+            </p>
+
             <input className="input" placeholder="Instagram ilan linki" value={form.instagram} onChange={(e) => setForm({ ...form, instagram: e.target.value })} />
             <input className="input" placeholder="Google Maps konum linki" value={form.maps} onChange={(e) => setForm({ ...form, maps: e.target.value })} />
             <textarea className="textarea" placeholder="İlan açıklaması" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
@@ -851,50 +896,61 @@ function App() {
         </div>
 
         <div className="cards">
-          {gorunenIlanlar.map((ilan) => (
-            <div className="card" key={ilan.id} onClick={() => setSeciliIlan(ilan)}>
-              <div className="imageWrap">
-                <img className="image" src={ilan.image} alt={ilan.title} />
-                <span className="status">{ilan.status || "Satılık"}</span>
-              </div>
+          {gorunenIlanlar.map((ilan) => {
+            const fotolar = fotoListesi(ilan);
 
-              <div className="cardBody">
-                <p className="location">Konum: {ilan.location}</p>
-                <h3 className="cardTitle">{ilan.title}</h3>
-                <p className="price">{ilan.price}</p>
-
-                <div className="details">
-                  {ilan.rooms && <span>{ilan.rooms}</span>}
-                  {ilan.area && <span>{ilan.area} m²</span>}
-                </div>
-
-                <div className="buttonRow">
-                  <a href={whatsappLink(ilan)} target="_blank" rel="noreferrer" onClick={(e) => e.stopPropagation()} className="whatsapp">
-                    <WhatsAppIcon /> WhatsApp
-                  </a>
-
-                  {ilan.instagram && (
-                    <a href={ilan.instagram} target="_blank" rel="noreferrer" onClick={(e) => e.stopPropagation()} className="instagram">
-                      <InstagramIcon /> Instagram
-                    </a>
-                  )}
-
-                  {ilan.maps && (
-                    <a href={ilan.maps} target="_blank" rel="noreferrer" onClick={(e) => e.stopPropagation()} className="mapsBtn">
-                      Konumu Gör
-                    </a>
-                  )}
-
-                  {admin && (
-                    <>
-                      <button className="editBtn" onClick={(e) => { e.stopPropagation(); ilanDuzenle(ilan); }}>Düzenle</button>
-                      <button className="deleteBtn" onClick={(e) => { e.stopPropagation(); ilanSil(ilan.id); }}>Sil</button>
-                    </>
+            return (
+              <div className="card" key={ilan.id} onClick={() => ilanAc(ilan)}>
+                <div className="imageWrap">
+                  <img className="image" src={ilkFoto(ilan)} alt={ilan.title} />
+                  <span className="status">{ilan.status || "Satılık"}</span>
+                  {fotolar.length > 1 && (
+                    <span className="photoCount">{fotolar.length} fotoğraf</span>
                   )}
                 </div>
+
+                <div className="cardBody">
+                  <p className="location">Konum: {ilan.location}</p>
+                  <h3 className="cardTitle">{ilan.title}</h3>
+                  <p className="price">{ilan.price}</p>
+
+                  <div className="details">
+                    {ilan.rooms && <span>{ilan.rooms}</span>}
+                    {ilan.area && <span>{ilan.area} m²</span>}
+                  </div>
+
+                  <div className="buttonRow">
+                    <a href={whatsappLink(ilan)} target="_blank" rel="noreferrer" onClick={(e) => e.stopPropagation()} className="whatsapp">
+                      <LogoIcon type="whatsapp" /> WhatsApp
+                    </a>
+
+                    {ilan.instagram && (
+                      <a href={ilan.instagram} target="_blank" rel="noreferrer" onClick={(e) => e.stopPropagation()} className="instagram">
+                        <LogoIcon type="instagram" /> Instagram
+                      </a>
+                    )}
+
+                    {ilan.maps && (
+                      <a href={ilan.maps} target="_blank" rel="noreferrer" onClick={(e) => e.stopPropagation()} className="mapsBtn">
+                        Konumu Gör
+                      </a>
+                    )}
+
+                    {admin && (
+                      <>
+                        <button className="editBtn" onClick={(e) => { e.stopPropagation(); ilanDuzenle(ilan); }}>
+                          Düzenle
+                        </button>
+                        <button className="deleteBtn" onClick={(e) => { e.stopPropagation(); ilanSil(ilan.id); }}>
+                          Sil
+                        </button>
+                      </>
+                    )}
+                  </div>
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
 
         <div className="moreBtnWrap">
@@ -906,9 +962,33 @@ function App() {
         <div className="modalBackdrop" onClick={() => setSeciliIlan(null)}>
           <div className="modal" onClick={(e) => e.stopPropagation()}>
             <div className="modalGrid">
-              <img className="modalImg" src={seciliIlan.image} alt={seciliIlan.title} />
+              <div className="modalGallery">
+                <img
+                  className="modalImg"
+                  src={seciliFotolar[aktifFoto] || ilkFoto(seciliIlan)}
+                  alt={seciliIlan.title}
+                />
+
+                {seciliFotolar.length > 1 && (
+                  <div className="thumbs">
+                    {seciliFotolar.map((foto, index) => (
+                      <img
+                        key={index}
+                        src={foto}
+                        alt={`Fotoğraf ${index + 1}`}
+                        className={`thumb ${aktifFoto === index ? "active" : ""}`}
+                        onClick={() => setAktifFoto(index)}
+                      />
+                    ))}
+                  </div>
+                )}
+              </div>
+
               <div className="modalContent">
-                <button className="closeBtn" onClick={() => setSeciliIlan(null)}>Kapat</button>
+                <button className="closeBtn" onClick={() => setSeciliIlan(null)}>
+                  Kapat
+                </button>
+
                 <h2 className="modalTitle">{seciliIlan.title}</h2>
                 <p className="location">Konum: {seciliIlan.location}</p>
                 <p className="modalPrice">{seciliIlan.price}</p>
@@ -920,28 +1000,35 @@ function App() {
                 </div>
 
                 <p className="modalDesc">
-                  {seciliIlan.description || "Bu ilan hakkında detaylı bilgi almak için WhatsApp üzerinden bizimle iletişime geçebilirsiniz."}
+                  {seciliIlan.description ||
+                    "Bu ilan hakkında detaylı bilgi almak için WhatsApp üzerinden bizimle iletişime geçebilirsiniz."}
                 </p>
 
                 <div className="buttonRow">
                   <a href={whatsappLink(seciliIlan)} target="_blank" rel="noreferrer" className="whatsapp">
-                    <WhatsAppIcon /> WhatsApp ile Bilgi Al
+                    <LogoIcon type="whatsapp" /> WhatsApp ile Bilgi Al
                   </a>
 
                   {seciliIlan.instagram && (
                     <a href={seciliIlan.instagram} target="_blank" rel="noreferrer" className="instagram">
-                      <InstagramIcon /> Instagram’da Gör
+                      <LogoIcon type="instagram" /> Instagram’da Gör
                     </a>
                   )}
 
                   {seciliIlan.maps && (
-                    <a href={seciliIlan.maps} target="_blank" rel="noreferrer" className="mapsBtn">Google Maps’te Aç</a>
+                    <a href={seciliIlan.maps} target="_blank" rel="noreferrer" className="mapsBtn">
+                      Google Maps’te Aç
+                    </a>
                   )}
 
                   {admin && (
                     <>
-                      <button className="editBtn" onClick={() => ilanDuzenle(seciliIlan)}>Düzenle</button>
-                      <button className="deleteBtn" onClick={() => ilanSil(seciliIlan.id)}>Sil</button>
+                      <button className="editBtn" onClick={() => ilanDuzenle(seciliIlan)}>
+                        Düzenle
+                      </button>
+                      <button className="deleteBtn" onClick={() => ilanSil(seciliIlan.id)}>
+                        Sil
+                      </button>
                     </>
                   )}
                 </div>
@@ -987,13 +1074,13 @@ function App() {
           <span className="followTitle">Bizi Takip Edin</span>
           <div className="socials">
             <a className="socialBtn" href={CONTACTS.instagram} target="_blank" rel="noreferrer">
-              <InstagramIcon /> Instagram
+              <LogoIcon type="instagram" /> Instagram
             </a>
             <a className="socialBtn" href={CONTACTS.tiktok} target="_blank" rel="noreferrer">
-              <TikTokIcon /> TikTok
+              <LogoIcon type="tiktok" /> TikTok
             </a>
             <a className="socialBtn" href={CONTACTS.facebook} target="_blank" rel="noreferrer">
-              <FacebookIcon /> Facebook
+              <LogoIcon type="facebook" /> Facebook
             </a>
           </div>
         </div>
