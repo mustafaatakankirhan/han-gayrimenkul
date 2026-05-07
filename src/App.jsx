@@ -91,18 +91,6 @@ function App() {
     ilanlariGetir();
   }, []);
 
-  useEffect(() => {
-    if (seciliIlan) {
-      document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "auto";
-    }
-
-    return () => {
-      document.body.style.overflow = "auto";
-    };
-  }, [seciliIlan]);
-
   const fotoListesi = (ilan) => {
     return (ilan.image || "")
       .split(",")
@@ -216,6 +204,7 @@ function App() {
 
   const dokunmaBitir = (e) => {
     if (touchStartX.current === null) return;
+
     const endX = e.changedTouches[0].clientX;
     const fark = touchStartX.current - endX;
 
@@ -788,18 +777,22 @@ function App() {
 
         .sliderFrame {
           position: relative;
-          overflow: hidden;
-          border-radius: 20px;
+          width: 100%;
+          aspect-ratio: 16 / 10;
           background: #050505;
+          border-radius: 22px;
+          overflow: hidden;
+          display: flex;
+          align-items: center;
+          justify-content: center;
         }
 
         .modalImg {
           width: 100%;
-          height: 520px;
-          object-fit: contain;
-          border-radius: 20px;
+          height: 100%;
+          object-fit: cover;
           display: block;
-          background: #050505;
+          transition: transform 0.4s ease;
           animation: slidePhoto .24s ease;
         }
 
@@ -1065,45 +1058,36 @@ function App() {
             transform: none;
           }
 
-         .modalBackdrop {
-  padding: 8px;
-  align-items: flex-start;
-  overflow-y: auto;
-}
+          .modalBackdrop {
+            padding: 10px;
+            align-items: flex-start;
+            overflow-y: auto;
+          }
 
-.modal {
-  width: 100%;
-  max-height: none;
-  min-height: auto;
-  border-radius: 20px;
-  margin-top: 10px;
-}
+          .modal {
+            width: 100%;
+            max-height: none;
+            border-radius: 22px;
+            margin-top: 10px;
+          }
 
-.modalGrid {
-  grid-template-columns: 1fr;
-}
+          .modalGrid {
+            grid-template-columns: 1fr;
+          }
 
-.modalGallery {
-  padding: 10px;
-}
+          .modalGallery {
+            padding: 10px;
+          }
 
-.sliderFrame {
-  height: 42vh;
-  min-height: 260px;
-  max-height: 360px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
+          .sliderFrame {
+            aspect-ratio: 4 / 3;
+            border-radius: 18px;
+            background: #000;
+          }
 
-.modalImg {
-  width: 100%;
-  height: 100%;
-  max-height: 360px;
-  object-fit: contain;
-  background: #050505;
-  border-radius: 16px;
-}
+          .modalImg {
+            object-fit: contain;
+            background: #000;
           }
 
           .galleryArrow {
@@ -1115,41 +1099,39 @@ function App() {
           .arrowLeft { left: 10px; }
           .arrowRight { right: 10px; }
 
-         .thumbs {
-  display: flex;
-  overflow-x: auto;
-  padding-bottom: 6px;
-  margin-top: 10px;
-  gap: 8px;
-}
-
-.thumb {
-  min-width: 68px;
-  width: 68px;
-  height: 54px;
-  border-radius: 10px;
-}
+          .thumbs {
+            display: flex;
+            overflow-x: auto;
+            padding-bottom: 6px;
+            margin-top: 12px;
+            gap: 8px;
           }
 
-         .modalContent {
-  padding: 12px 18px 20px;
-}
+          .thumb {
+            min-width: 74px;
+            width: 74px;
+            height: 58px;
+            border-radius: 12px;
+          }
 
-.modalTitle {
-  margin-top: 10px;
-  font-size: 24px;
-  line-height: 1.15;
-}
+          .modalContent {
+            padding: 16px 18px 22px;
+          }
 
-.modalPrice {
-  font-size: 26px;
-  margin: 10px 0;
-}
+          .modalTitle {
+            margin-top: 10px;
+            font-size: 24px;
+            line-height: 1.2;
+          }
 
-.modalDesc {
-  font-size: 15px;
-  line-height: 1.55;
-}
+          .modalPrice {
+            font-size: 34px;
+            margin: 10px 0;
+          }
+
+          .modalDesc {
+            font-size: 15px;
+            line-height: 1.55;
           }
 
           .details {
