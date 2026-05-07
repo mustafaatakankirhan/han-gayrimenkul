@@ -13,6 +13,7 @@ const ADMIN_PASSWORD = "1234";
 
 const CONTACTS = {
   officePhone: "0530 895 4919",
+  secondOfficePhone: "0532 593 37 16",
   mustafaName: "Mustafa Atakan Kırhan",
   mustafaPhone: "0530 895 4919",
   muzafferName: "Muzaffer Kırhan",
@@ -111,6 +112,7 @@ function App() {
       maps: ilan.maps || "",
       description: ilan.description || "",
     });
+
     setDuzenlenenId(ilan.id);
     setSeciliIlan(null);
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -126,94 +128,109 @@ function App() {
       <style>{`
         * { box-sizing: border-box; }
         body { margin: 0; background: #050505; }
+
         .page {
           min-height: 100vh;
           background: radial-gradient(circle at top, #101418 0%, #050505 45%, #030303 100%);
           color: white;
           font-family: Arial, sans-serif;
         }
+
         .topHero {
           min-height: 720px;
           background:
-            linear-gradient(to bottom, rgba(0,0,0,.35), rgba(0,0,0,.92)),
-            linear-gradient(to right, rgba(0,0,0,.72), rgba(0,0,0,.35)),
+            linear-gradient(to bottom, rgba(0,0,0,.32), rgba(0,0,0,.94)),
+            linear-gradient(to right, rgba(0,0,0,.70), rgba(0,0,0,.32)),
             url("https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?q=80&w=2200&auto=format&fit=crop");
           background-size: cover;
           background-position: center;
-          position: relative;
           border-bottom: 1px solid rgba(255,138,0,.28);
         }
+
         .header {
-          padding: 26px 7%;
+          padding: 28px 7%;
           display: flex;
           justify-content: space-between;
           align-items: flex-start;
-          gap: 20px;
+          gap: 22px;
           flex-wrap: wrap;
         }
+
         .brandName {
           margin: 0;
           color: #ff8a00;
-          font-size: 36px;
-          font-weight: 900;
-          letter-spacing: -.5px;
+          font-size: 38px;
+          font-weight: 950;
+          letter-spacing: -1px;
         }
-        .brandPhones {
-          display: flex;
-          align-items: flex-start;
-          gap: 12px;
-          margin-top: 10px;
-          color: #fff;
-          font-weight: 900;
-          font-size: 17px;
-          line-height: 1.45;
+
+        .brandSlogan {
+          margin: 6px 0 0;
+          color: #ffffff;
+          font-size: 22px;
+          font-style: italic;
+          font-family: "Brush Script MT", "Segoe Script", cursive;
+          opacity: .95;
         }
-        .phoneIcon { color: #ff8a00; font-size: 26px; }
+
         .headerRight {
           display: flex;
           align-items: center;
-          gap: 24px;
+          gap: 26px;
           flex-wrap: wrap;
         }
+
         .adminArea {
           display: flex;
           gap: 10px;
           flex-wrap: wrap;
           align-items: center;
         }
+
         .passwordInput {
-          padding: 12px 15px;
+          padding: 13px 18px;
           border-radius: 999px;
-          border: 1px solid rgba(255,138,0,.45);
-          background: rgba(0,0,0,.4);
+          border: 1px solid rgba(255,255,255,.45);
+          background: rgba(0,0,0,.35);
           color: white;
           outline: none;
         }
+
         .adminBtn {
-          padding: 13px 24px;
+          padding: 13px 25px;
           border-radius: 999px;
           border: 1px solid #ff8a00;
-          background: rgba(0,0,0,.38);
+          background: rgba(0,0,0,.35);
           color: white;
           font-weight: 900;
           cursor: pointer;
         }
+
         .flag {
-          font-size: 66px;
+          width: 88px;
+          height: 58px;
+          background: #e30a17;
+          border-radius: 2px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 34px;
+          box-shadow: 0 14px 30px rgba(0,0,0,.45);
           animation: wave 1.8s ease-in-out infinite;
-          transform-origin: center;
-          filter: drop-shadow(0 10px 20px rgba(0,0,0,.45));
         }
+
         @keyframes wave {
           0%, 100% { transform: rotate(-2deg) scale(1); }
           50% { transform: rotate(3deg) scale(1.04); }
         }
+
         .heroContent {
           text-align: center;
-          padding: 50px 7% 100px;
+          padding: 45px 7% 100px;
           max-width: 1100px;
           margin: 0 auto;
         }
+
         .badge {
           display: inline-block;
           padding: 13px 30px;
@@ -221,18 +238,20 @@ function App() {
           border: 1px solid rgba(255,138,0,.75);
           background: rgba(255,138,0,.10);
           color: #ff8a00;
-          font-weight: 900;
+          font-weight: 950;
           font-size: 20px;
         }
+
         .heroTitle {
           margin: 34px auto 25px;
           max-width: 1000px;
-          font-size: clamp(48px, 8vw, 92px);
+          font-size: clamp(46px, 8vw, 92px);
           line-height: 1.02;
           font-weight: 950;
           letter-spacing: -3px;
           text-shadow: 0 10px 30px rgba(0,0,0,.55);
         }
+
         .divider {
           width: 150px;
           height: 3px;
@@ -240,6 +259,7 @@ function App() {
           margin: 0 auto 24px;
           position: relative;
         }
+
         .divider::after {
           content: "";
           position: absolute;
@@ -251,6 +271,7 @@ function App() {
           border-radius: 50%;
           transform: translate(-50%, -50%);
         }
+
         .heroText {
           max-width: 760px;
           margin: 0 auto;
@@ -258,6 +279,7 @@ function App() {
           font-size: 21px;
           line-height: 1.7;
         }
+
         .heroBtn {
           display: inline-flex;
           align-items: center;
@@ -273,6 +295,7 @@ function App() {
           font-size: 18px;
           box-shadow: 0 15px 35px rgba(255,138,0,.25);
         }
+
         .adminPanel {
           max-width: 1160px;
           margin: 45px auto 0;
@@ -281,12 +304,15 @@ function App() {
           border: 1px solid rgba(255,138,0,.42);
           background: linear-gradient(135deg, rgba(255,138,0,.12), rgba(255,255,255,.05));
         }
+
         .adminTitle { color: #ff8a00; margin-top: 0; }
+
         .formGrid {
           display: grid;
           grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
           gap: 13px;
         }
+
         .input, .textarea {
           padding: 14px;
           border-radius: 14px;
@@ -296,11 +322,13 @@ function App() {
           outline: none;
           width: 100%;
         }
+
         .textarea {
           min-height: 110px;
           resize: vertical;
           grid-column: 1 / -1;
         }
+
         .addBtn, .cancelBtn {
           display: inline-block;
           margin-top: 18px;
@@ -310,16 +338,18 @@ function App() {
           cursor: pointer;
           font-weight: 900;
         }
+
         .addBtn { background: #ff8a00; color: #000; }
+
         .cancelBtn {
           margin-left: 10px;
           background: transparent;
           color: white;
           border: 1px solid #777;
         }
-        .listings {
-          padding: 70px 7% 40px;
-        }
+
+        .listings { padding: 70px 7% 40px; }
+
         .sectionLabel {
           text-align: center;
           color: #ff8a00;
@@ -327,11 +357,13 @@ function App() {
           letter-spacing: 1px;
           margin: 0;
         }
+
         .sectionTitle {
           text-align: center;
           font-size: 44px;
           margin: 10px 0 20px;
         }
+
         .filters {
           display: flex;
           justify-content: center;
@@ -339,6 +371,7 @@ function App() {
           flex-wrap: wrap;
           margin-bottom: 34px;
         }
+
         .filterBtn {
           min-width: 95px;
           padding: 13px 22px;
@@ -349,11 +382,13 @@ function App() {
           cursor: pointer;
           font-weight: 900;
         }
+
         .cards {
           display: grid;
           grid-template-columns: repeat(auto-fit, minmax(310px, 1fr));
           gap: 30px;
         }
+
         .card {
           background: rgba(255,255,255,.055);
           border: 1px solid rgba(255,255,255,.12);
@@ -363,22 +398,27 @@ function App() {
           transition: .25s ease;
           box-shadow: 0 18px 45px rgba(0,0,0,.30);
         }
+
         .card:hover {
           transform: translateY(-7px);
           border-color: rgba(255,138,0,.75);
         }
+
         .imageWrap {
           height: 240px;
           position: relative;
           overflow: hidden;
         }
+
         .image {
           width: 100%;
           height: 100%;
           object-fit: cover;
           transition: .4s ease;
         }
+
         .card:hover .image { transform: scale(1.05); }
+
         .status {
           position: absolute;
           top: 14px;
@@ -389,26 +429,31 @@ function App() {
           color: #000;
           font-weight: 950;
         }
+
         .cardBody { padding: 22px; }
         .location { color: #bbb; font-size: 14px; }
+
         .cardTitle {
           font-size: 21px;
           line-height: 1.3;
           min-height: 54px;
           margin: 12px 0;
         }
+
         .price {
           color: #ff8a00;
           font-size: 27px;
           font-weight: 950;
           margin: 12px 0;
         }
+
         .details {
           display: flex;
           gap: 10px;
           flex-wrap: wrap;
           margin: 14px 0;
         }
+
         .details span {
           padding: 7px 10px;
           border-radius: 9px;
@@ -416,6 +461,7 @@ function App() {
           color: #eee;
           font-size: 13px;
         }
+
         .buttonRow {
           display: flex;
           gap: 8px;
@@ -423,6 +469,7 @@ function App() {
           padding-top: 15px;
           border-top: 1px solid rgba(255,255,255,.10);
         }
+
         .whatsapp, .instagram, .mapsBtn, .editBtn, .deleteBtn {
           padding: 10px 13px;
           border-radius: 10px;
@@ -433,12 +480,15 @@ function App() {
           border: none;
           cursor: pointer;
         }
+
         .whatsapp { background: rgba(37,211,102,.18); border: 1px solid rgba(37,211,102,.45); }
         .instagram { background: rgba(225,48,108,.18); border: 1px solid rgba(225,48,108,.45); }
         .mapsBtn { background: rgba(255,138,0,.18); border: 1px solid rgba(255,138,0,.55); }
         .editBtn { background: #1f6feb; }
         .deleteBtn { background: #b00020; }
+
         .moreBtnWrap { text-align: center; margin-top: 40px; }
+
         .moreBtn {
           display: inline-block;
           padding: 16px 40px;
@@ -448,52 +498,74 @@ function App() {
           text-decoration: none;
           font-weight: 900;
         }
+
         .contact {
           margin: 30px 7% 0;
-          padding: 55px 20px;
+          padding: 55px 0;
           border-top: 1px solid rgba(255,255,255,.12);
           text-align: center;
         }
+
         .contactTitle {
           font-size: 42px;
           margin: 0 0 35px;
         }
+
         .contactGrid {
           display: grid;
-          grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
-          gap: 28px;
-          align-items: start;
+          grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+          gap: 18px;
+          align-items: stretch;
         }
+
         .contactItem {
-          padding: 10px 18px;
-          border-right: 1px solid rgba(255,255,255,.16);
+          padding: 24px;
+          border: 1px solid rgba(255,255,255,.14);
+          border-radius: 16px;
+          background: rgba(255,255,255,.035);
         }
-        .contactItem:last-child { border-right: none; }
-        .contactName { color: white; margin: 0 0 8px; }
+
+        .contactIcon {
+          color: #ff8a00;
+          font-size: 28px;
+          margin-bottom: 10px;
+        }
+
+        .contactName {
+          color: white;
+          margin: 0 0 8px;
+          font-weight: 800;
+        }
+
         .contactPhone {
           color: #ff8a00;
           margin: 4px 0;
           font-weight: 950;
           font-size: 18px;
         }
+
         .emailText { color: white; word-break: break-word; }
+
         .follow {
           margin-top: 35px;
           padding-top: 28px;
           border-top: 1px solid rgba(255,255,255,.12);
         }
+
         .followTitle {
           display: inline-block;
           margin-bottom: 18px;
           font-weight: 900;
           color: #ddd;
         }
+
         .socials {
           display: flex;
           justify-content: center;
           gap: 20px;
           flex-wrap: wrap;
         }
+
         .socialBtn {
           min-width: 160px;
           padding: 13px 25px;
@@ -503,12 +575,15 @@ function App() {
           text-decoration: none;
           font-weight: 900;
         }
+
         .footer {
           padding: 30px;
           text-align: center;
           color: #aaa;
         }
+
         .footer strong { color: #ff8a00; }
+
         .modalBackdrop {
           position: fixed;
           inset: 0;
@@ -519,6 +594,7 @@ function App() {
           justify-content: center;
           padding: 24px;
         }
+
         .modal {
           width: min(1100px, 100%);
           max-height: 92vh;
@@ -528,17 +604,21 @@ function App() {
           border-radius: 28px;
           box-shadow: 0 30px 90px rgba(0,0,0,.7);
         }
+
         .modalGrid {
           display: grid;
           grid-template-columns: 1.1fr .9fr;
         }
+
         .modalImg {
           width: 100%;
           height: 100%;
           min-height: 520px;
           object-fit: cover;
         }
+
         .modalContent { padding: 34px; position: relative; }
+
         .closeBtn {
           float: right;
           background: transparent;
@@ -548,33 +628,37 @@ function App() {
           padding: 8px 14px;
           cursor: pointer;
         }
+
         .modalTitle {
           font-size: 34px;
           line-height: 1.2;
           margin: 42px 0 12px;
         }
+
         .modalPrice {
           color: #ff8a00;
           font-size: 34px;
           font-weight: 950;
         }
+
         .modalDesc {
           color: #ccc;
           line-height: 1.7;
           font-size: 16px;
         }
+
         @media (max-width: 800px) {
           .topHero { min-height: auto; }
           .header { padding: 20px 22px; }
           .brandName { font-size: 30px; }
-          .flag { font-size: 48px; }
+          .brandSlogan { font-size: 18px; }
+          .flag { width: 68px; height: 46px; font-size: 26px; }
           .heroContent { padding: 45px 22px 75px; }
           .heroTitle { letter-spacing: -1px; }
           .listings { padding: 55px 22px 30px; }
           .modalGrid { grid-template-columns: 1fr; }
           .modalImg { min-height: 300px; }
           .buttonRow a, .buttonRow button { flex: 1; text-align: center; }
-          .contactItem { border-right: none; border-bottom: 1px solid rgba(255,255,255,.12); padding-bottom: 22px; }
         }
       `}</style>
 
@@ -582,13 +666,7 @@ function App() {
         <header className="header">
           <div>
             <h1 className="brandName">Han Gayrimenkul</h1>
-            <div className="brandPhones">
-              <span className="phoneIcon">☎</span>
-              <div>
-                <div>{CONTACTS.officePhone}</div>
-                <div>{CONTACTS.muzafferPhone}</div>
-              </div>
-            </div>
+            <p className="brandSlogan">Doğru yatırım, güvenle değer katar</p>
           </div>
 
           <div className="headerRight">
@@ -602,13 +680,17 @@ function App() {
                     onChange={(e) => setSifre(e.target.value)}
                     className="passwordInput"
                   />
-                  <button onClick={girisYap} className="adminBtn">Admin Giriş</button>
+                  <button onClick={girisYap} className="adminBtn">
+                    Admin Giriş
+                  </button>
                 </>
               ) : (
-                <button onClick={() => setAdmin(false)} className="adminBtn">Admin Çıkış</button>
+                <button onClick={() => setAdmin(false)} className="adminBtn">
+                  Admin Çıkış
+                </button>
               )}
             </div>
-            <div className="flag">🇹🇷</div>
+            <div className="flag">☪</div>
           </div>
         </header>
 
@@ -620,8 +702,13 @@ function App() {
             Han Gayrimenkul; satılık, kiralık ve yatırım odaklı portföyleri
             güvenilir, şeffaf ve profesyonel şekilde sunar.
           </p>
-          <a href={`https://wa.me/${CONTACTS.whatsapp}`} target="_blank" rel="noreferrer" className="heroBtn">
-            🟢 Hemen İletişime Geç
+          <a
+            href={`https://wa.me/${CONTACTS.whatsapp}`}
+            target="_blank"
+            rel="noreferrer"
+            className="heroBtn"
+          >
+            WhatsApp ile Hemen İletişime Geç
           </a>
         </div>
       </section>
@@ -688,13 +775,13 @@ function App() {
               </div>
 
               <div className="cardBody">
-                <p className="location">📍 {ilan.location}</p>
+                <p className="location">Konum: {ilan.location}</p>
                 <h3 className="cardTitle">{ilan.title}</h3>
                 <p className="price">{ilan.price}</p>
 
                 <div className="details">
-                  {ilan.rooms && <span>🏠 {ilan.rooms}</span>}
-                  {ilan.area && <span>📐 {ilan.area} m²</span>}
+                  {ilan.rooms && <span>{ilan.rooms}</span>}
+                  {ilan.area && <span>{ilan.area} m²</span>}
                 </div>
 
                 <div className="buttonRow">
@@ -726,12 +813,12 @@ function App() {
               <div className="modalContent">
                 <button className="closeBtn" onClick={() => setSeciliIlan(null)}>Kapat</button>
                 <h2 className="modalTitle">{seciliIlan.title}</h2>
-                <p className="location">📍 {seciliIlan.location}</p>
+                <p className="location">Konum: {seciliIlan.location}</p>
                 <p className="modalPrice">{seciliIlan.price}</p>
 
                 <div className="details">
-                  {seciliIlan.rooms && <span>🏠 {seciliIlan.rooms}</span>}
-                  {seciliIlan.area && <span>📐 {seciliIlan.area} m²</span>}
+                  {seciliIlan.rooms && <span>{seciliIlan.rooms}</span>}
+                  {seciliIlan.area && <span>{seciliIlan.area} m²</span>}
                   {seciliIlan.status && <span>{seciliIlan.status}</span>}
                 </div>
 
@@ -761,35 +848,39 @@ function App() {
 
         <div className="contactGrid">
           <div className="contactItem">
-            <p className="contactName">☎ Han Gayrimenkul</p>
+            <div className="contactIcon">☎</div>
+            <p className="contactName">Han Gayrimenkul</p>
             <p className="contactPhone">{CONTACTS.officePhone}</p>
-            <p className="contactPhone">{CONTACTS.muzafferPhone}</p>
+            <p className="contactPhone">{CONTACTS.secondOfficePhone}</p>
           </div>
 
           <div className="contactItem">
-            <p className="contactName">☎ {CONTACTS.mustafaName}</p>
+            <div className="contactIcon">👤</div>
+            <p className="contactName">{CONTACTS.mustafaName}</p>
             <p className="contactPhone">{CONTACTS.mustafaPhone}</p>
           </div>
 
           <div className="contactItem">
-            <p className="contactName">☎ {CONTACTS.muzafferName}</p>
+            <div className="contactIcon">👤</div>
+            <p className="contactName">{CONTACTS.muzafferName}</p>
             <p className="contactPhone">{CONTACTS.muzafferPhone}</p>
           </div>
 
           <div className="contactItem">
-            <p className="contactName">✉ E-posta</p>
+            <div className="contactIcon">✉</div>
+            <p className="contactName">E-posta</p>
             <p className="emailText">{CONTACTS.email}</p>
           </div>
         </div>
 
-        <p style={{ marginTop: 28, fontSize: 18 }}>📍 Sakarya / Karasu</p>
+        <p style={{ marginTop: 28, fontSize: 18 }}>Konum: Sakarya / Karasu</p>
 
         <div className="follow">
           <span className="followTitle">Bizi Takip Edin</span>
           <div className="socials">
-            <a className="socialBtn" href={CONTACTS.instagram} target="_blank" rel="noreferrer">📸 Instagram</a>
-            <a className="socialBtn" href={CONTACTS.tiktok} target="_blank" rel="noreferrer">🎵 TikTok</a>
-            <a className="socialBtn" href={CONTACTS.facebook} target="_blank" rel="noreferrer">🔵 Facebook</a>
+            <a className="socialBtn" href={CONTACTS.instagram} target="_blank" rel="noreferrer">Instagram</a>
+            <a className="socialBtn" href={CONTACTS.tiktok} target="_blank" rel="noreferrer">TikTok</a>
+            <a className="socialBtn" href={CONTACTS.facebook} target="_blank" rel="noreferrer">Facebook</a>
           </div>
         </div>
       </section>
