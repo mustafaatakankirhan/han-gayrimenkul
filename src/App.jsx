@@ -298,7 +298,10 @@ function App() {
           line-height: 1.02;
           font-weight: 950;
           letter-spacing: -3px;
-          text-shadow: 0 10px 30px rgba(0,0,0,.55);
+          color: #ffffff;
+          text-shadow:
+            0 4px 0 rgba(0,0,0,.35),
+            0 14px 40px rgba(0,0,0,.95);
         }
 
         .divider {
@@ -324,14 +327,16 @@ function App() {
         .heroText {
           max-width: 760px;
           margin: 0 auto;
-          color: #eee;
+          color: #fff;
           font-size: 21px;
           line-height: 1.7;
+          text-shadow: 0 8px 24px rgba(0,0,0,.95);
         }
 
         .heroBtn {
           display: inline-flex;
           align-items: center;
+          justify-content: center;
           gap: 12px;
           margin-top: 34px;
           padding: 17px 34px;
@@ -763,17 +768,161 @@ function App() {
         }
 
         @media (max-width: 800px) {
-          .topHero { min-height: auto; }
-          .header { padding: 20px 22px; }
-          .brandName { font-size: 30px; }
-          .brandSlogan { font-size: 18px; }
-          .flagBox { width: 72px; height: 48px; }
-          .heroContent { padding: 45px 22px 75px; }
-          .heroTitle { letter-spacing: -1px; }
-          .listings { padding: 55px 22px 30px; }
-          .modalGrid { grid-template-columns: 1fr; }
-          .modalImg { height: 320px; }
-          .buttonRow a, .buttonRow button { flex: 1; text-align: center; justify-content: center; }
+          .topHero {
+            min-height: 100vh;
+            background:
+              linear-gradient(to bottom, rgba(0,0,0,.72), rgba(0,0,0,.96)),
+              linear-gradient(to right, rgba(0,0,0,.76), rgba(0,0,0,.72)),
+              url("https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?q=80&w=1600&auto=format&fit=crop");
+            background-size: cover;
+            background-position: center;
+          }
+
+          .header {
+            padding: 22px 22px 10px;
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 18px;
+            align-items: center;
+          }
+
+          .brandName {
+            font-size: 37px;
+            line-height: .95;
+            text-align: left;
+          }
+
+          .brandSlogan {
+            font-size: 20px;
+            line-height: 1.2;
+            max-width: 95%;
+            text-shadow: 0 8px 18px rgba(0,0,0,.75);
+          }
+
+          .headerRight {
+            width: 100%;
+            display: grid;
+            grid-template-columns: 1fr auto;
+            align-items: center;
+            gap: 14px;
+          }
+
+          .adminArea {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            width: 100%;
+            gap: 10px;
+          }
+
+          .passwordInput {
+            width: 100%;
+            min-width: 0;
+            padding: 16px 17px;
+            font-size: 16px;
+            background: rgba(10,10,10,.55);
+          }
+
+          .adminBtn {
+            width: 100%;
+            padding: 16px 14px;
+            font-size: 16px;
+            white-space: nowrap;
+            background: rgba(10,10,10,.55);
+          }
+
+          .flagBox {
+            width: 70px;
+            height: 47px;
+            justify-self: end;
+          }
+
+          .heroContent {
+            padding: 70px 22px 70px;
+          }
+
+          .badge {
+            font-size: 20px;
+            padding: 13px 28px;
+            background: rgba(0,0,0,.42);
+            box-shadow: 0 10px 30px rgba(0,0,0,.45);
+          }
+
+          .heroTitle {
+            margin: 34px auto 24px;
+            font-size: clamp(42px, 13vw, 64px);
+            line-height: .98;
+            letter-spacing: -2px;
+            color: #fff !important;
+            text-shadow:
+              0 3px 0 rgba(0,0,0,.65),
+              0 10px 22px rgba(0,0,0,1),
+              0 0 35px rgba(0,0,0,1);
+          }
+
+          .divider {
+            width: 145px;
+            margin-bottom: 28px;
+          }
+
+          .heroText {
+            font-size: 25px;
+            line-height: 1.55;
+            color: #fff;
+            text-shadow:
+              0 2px 0 rgba(0,0,0,.55),
+              0 10px 24px rgba(0,0,0,1);
+          }
+
+          .heroBtn {
+            width: 100%;
+            max-width: 420px;
+            padding: 20px 18px;
+            font-size: 20px;
+            line-height: 1.2;
+            margin-top: 34px;
+            box-shadow: 0 18px 40px rgba(255,138,0,.32);
+          }
+
+          .logoIcon {
+            width: 26px;
+            height: 26px;
+          }
+
+          .listings {
+            padding: 55px 22px 30px;
+          }
+
+          .sectionTitle {
+            font-size: 36px;
+          }
+
+          .cards {
+            grid-template-columns: 1fr;
+          }
+
+          .card:hover {
+            transform: none;
+          }
+
+          .modalGrid {
+            grid-template-columns: 1fr;
+          }
+
+          .modalImg {
+            height: 320px;
+          }
+
+          .buttonRow a,
+          .buttonRow button {
+            flex: 1;
+            text-align: center;
+            justify-content: center;
+          }
+
+          .contact {
+            margin-left: 22px;
+            margin-right: 22px;
+          }
         }
       `}</style>
 
