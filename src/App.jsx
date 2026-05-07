@@ -937,65 +937,7 @@ function App() {
               url("https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?q=80&w=1600&auto=format&fit=crop");
             background-size: cover;
             background-position: center;
-            /* MOBIL GALERI FINAL FIX */
-.modalBackdrop {
-  padding: 8px !important;
-  align-items: flex-start !important;
-  overflow-y: auto !important;
-}
-
-.modal {
-  max-height: none !important;
-  margin-top: 10px !important;
-}
-
-.sliderFrame {
-  width: 100% !important;
-  height: 320px !important;
-  aspect-ratio: unset !important;
-  background: #000 !important;
-  border-radius: 18px !important;
-  overflow: hidden !important;
-}
-
-.modalImg {
-  width: 100% !important;
-  height: 100% !important;
-  max-height: none !important;
-  object-fit: contain !important;
-  object-position: center center !important;
-  background: #000 !important;
-  border-radius: 18px !important;
-}
-
-.photoDots {
-  bottom: 10px !important;
-}
-
-.thumbs {
-  margin-top: 10px !important;
-  gap: 8px !important;
-  overflow-x: auto !important;
-}
-
-.thumb {
-  min-width: 70px !important;
-  width: 70px !important;
-  height: 54px !important;
-}
-
-.modalContent {
-  padding: 14px 18px 22px !important;
-}
-
-.modalTitle {
-  margin-top: 8px !important;
-  font-size: 23px !important;
-  line-height: 1.2 !important;
-}
-
-.modalPrice {
-  font-size: 28px !important;
+            
 }
           }
 
