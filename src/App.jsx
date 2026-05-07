@@ -91,6 +91,18 @@ function App() {
     ilanlariGetir();
   }, []);
 
+  useEffect(() => {
+    if (seciliIlan) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "auto";
+    }
+
+    return () => {
+      document.body.style.overflow = "auto";
+    };
+  }, [seciliIlan]);
+
   const fotoListesi = (ilan) => {
     return (ilan.image || "")
       .split(",")
@@ -204,7 +216,6 @@ function App() {
 
   const dokunmaBitir = (e) => {
     if (touchStartX.current === null) return;
-
     const endX = e.changedTouches[0].clientX;
     const fark = touchStartX.current - endX;
 
@@ -777,22 +788,18 @@ function App() {
 
         .sliderFrame {
           position: relative;
-          width: 100%;
-          aspect-ratio: 16 / 10;
-          background: #050505;
-          border-radius: 22px;
           overflow: hidden;
-          display: flex;
-          align-items: center;
-          justify-content: center;
+          border-radius: 20px;
+          background: #050505;
         }
 
         .modalImg {
           width: 100%;
-          height: 100%;
-          object-fit: cover;
+          height: 520px;
+          object-fit: contain;
+          border-radius: 20px;
           display: block;
-          transition: transform 0.4s ease;
+          background: #050505;
           animation: slidePhoto .24s ease;
         }
 
@@ -930,6 +937,66 @@ function App() {
               url("https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?q=80&w=1600&auto=format&fit=crop");
             background-size: cover;
             background-position: center;
+            /* MOBIL GALERI FINAL FIX */
+.modalBackdrop {
+  padding: 8px !important;
+  align-items: flex-start !important;
+  overflow-y: auto !important;
+}
+
+.modal {
+  max-height: none !important;
+  margin-top: 10px !important;
+}
+
+.sliderFrame {
+  width: 100% !important;
+  height: 320px !important;
+  aspect-ratio: unset !important;
+  background: #000 !important;
+  border-radius: 18px !important;
+  overflow: hidden !important;
+}
+
+.modalImg {
+  width: 100% !important;
+  height: 100% !important;
+  max-height: none !important;
+  object-fit: contain !important;
+  object-position: center center !important;
+  background: #000 !important;
+  border-radius: 18px !important;
+}
+
+.photoDots {
+  bottom: 10px !important;
+}
+
+.thumbs {
+  margin-top: 10px !important;
+  gap: 8px !important;
+  overflow-x: auto !important;
+}
+
+.thumb {
+  min-width: 70px !important;
+  width: 70px !important;
+  height: 54px !important;
+}
+
+.modalContent {
+  padding: 14px 18px 22px !important;
+}
+
+.modalTitle {
+  margin-top: 8px !important;
+  font-size: 23px !important;
+  line-height: 1.2 !important;
+}
+
+.modalPrice {
+  font-size: 28px !important;
+}
           }
 
           .header {
@@ -1058,36 +1125,45 @@ function App() {
             transform: none;
           }
 
-          .modalBackdrop {
-            padding: 10px;
-            align-items: flex-start;
-            overflow-y: auto;
-          }
+         .modalBackdrop {
+  padding: 8px;
+  align-items: flex-start;
+  overflow-y: auto;
+}
 
-          .modal {
-            width: 100%;
-            max-height: none;
-            border-radius: 22px;
-            margin-top: 10px;
-          }
+.modal {
+  width: 100%;
+  max-height: none;
+  min-height: auto;
+  border-radius: 20px;
+  margin-top: 10px;
+}
 
-          .modalGrid {
-            grid-template-columns: 1fr;
-          }
+.modalGrid {
+  grid-template-columns: 1fr;
+}
 
-          .modalGallery {
-            padding: 10px;
-          }
+.modalGallery {
+  padding: 10px;
+}
 
-          .sliderFrame {
-            aspect-ratio: 4 / 3;
-            border-radius: 18px;
-            background: #000;
-          }
+.sliderFrame {
+  height: 42vh;
+  min-height: 260px;
+  max-height: 360px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
 
-          .modalImg {
-            object-fit: contain;
-            background: #000;
+.modalImg {
+  width: 100%;
+  height: 100%;
+  max-height: 360px;
+  object-fit: contain;
+  background: #050505;
+  border-radius: 16px;
+}
           }
 
           .galleryArrow {
@@ -1099,39 +1175,41 @@ function App() {
           .arrowLeft { left: 10px; }
           .arrowRight { right: 10px; }
 
-          .thumbs {
-            display: flex;
-            overflow-x: auto;
-            padding-bottom: 6px;
-            margin-top: 12px;
-            gap: 8px;
+         .thumbs {
+  display: flex;
+  overflow-x: auto;
+  padding-bottom: 6px;
+  margin-top: 10px;
+  gap: 8px;
+}
+
+.thumb {
+  min-width: 68px;
+  width: 68px;
+  height: 54px;
+  border-radius: 10px;
+}
           }
 
-          .thumb {
-            min-width: 74px;
-            width: 74px;
-            height: 58px;
-            border-radius: 12px;
-          }
+         .modalContent {
+  padding: 12px 18px 20px;
+}
 
-          .modalContent {
-            padding: 16px 18px 22px;
-          }
+.modalTitle {
+  margin-top: 10px;
+  font-size: 24px;
+  line-height: 1.15;
+}
 
-          .modalTitle {
-            margin-top: 10px;
-            font-size: 24px;
-            line-height: 1.2;
-          }
+.modalPrice {
+  font-size: 26px;
+  margin: 10px 0;
+}
 
-          .modalPrice {
-            font-size: 34px;
-            margin: 10px 0;
-          }
-
-          .modalDesc {
-            font-size: 15px;
-            line-height: 1.55;
+.modalDesc {
+  font-size: 15px;
+  line-height: 1.55;
+}
           }
 
           .details {
