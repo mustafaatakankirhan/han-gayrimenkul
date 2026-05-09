@@ -32,14 +32,14 @@ const CLOUDINARY_CLOUD_NAME = "depa6zrzr";
 const CLOUDINARY_UPLOAD_PRESET = "han_upload";
 
 const CONTACTS = {
-  officePhone: "0530 895 49 19",
-  secondOfficePhone: "0532 593 37 16",
-  mustafaName: "Mustafa Atakan Kırhan",
-  mustafaPhone: "0530 895 49 19",
+  officePhone: "0532 593 37 16",
+  secondOfficePhone: "0530 895 49 19",
   muzafferName: "Muzaffer Kırhan",
   muzafferPhone: "0532 593 37 16",
+  mustafaName: "Mustafa Atakan Kırhan",
+  mustafaPhone: "0530 895 49 19",
   email: "hangayrimenkulkarasu@gmail.com",
-  whatsapp: "905308954919",
+  whatsapp: "905325933716",
   instagram: "https://www.instagram.com/hangayrimenkulkarasu/?hl=tr",
   tiktok: "https://www.tiktok.com/@han_gayrimenkul",
   facebook: "https://www.facebook.com/hangayrimenkulkarasu",
@@ -364,7 +364,7 @@ ${location} bölgesinde ${type.toLowerCase()} arayanlar için yeni portföyümü
 
 Detaylı bilgi için bize WhatsApp üzerinden ulaşabilirsiniz.
 
-Han Gayrimenkul — yatırımınıza güvenle değer.`;
+Han Gayrimenkul — Doğru Yerde, Doğru Yatırım, Güvenle Değer Katar`;
 }
 
 function optimizeCloudinaryVideoUrl(url) {
@@ -402,7 +402,7 @@ function Header({ detail = false, admin, setAdmin, setAdminOpen }) {
         <img src={logo} alt="Han Gayrimenkul Logo" className="brandLogo" />
         <div>
           <h1 className="brandName">Han Gayrimenkul</h1>
-          <p className="brandSlogan">Doğru yatırım, güvenle değer katar</p>
+          <p className="brandSlogan">Doğru Yerde, Doğru Yatırım, Güvenle Değer Katar</p>
         </div>
       </Link>
 
@@ -1187,6 +1187,7 @@ function Home({
         </div>
       </section>
 
+
       <Contact />
     </div>
   );
@@ -1318,8 +1319,8 @@ function ListingDetail({ ilanlar, favorites, toggleFavorite }) {
             />
 
             <button className="fullscreenBtn" onClick={() => setFullGallery(true)}>
-              ⛶ Tam ekran
-            </button>
+  ⛶ Tam ekran
+</button>
 
             {fotolar.length > 1 && (
               <>
@@ -1445,7 +1446,52 @@ function ListingDetail({ ilanlar, favorites, toggleFavorite }) {
           </div>
         </section>
       </main>
+{fullGallery && (
+  <div
+    className="fullGalleryOverlay"
+    onTouchStart={dokunmaBasla}
+    onTouchEnd={dokunmaBitir}
+  >
+    <div className="fullGalleryTop">
+      <button onClick={() => setFullGallery(false)}>✕ Kapat</button>
 
+      <span>
+        {aktifFoto + 1} / {fotolar.length || 1}
+      </span>
+
+      <button onClick={() => setZoomed((v) => !v)}>
+        {zoomed ? "Uzaklaştır" : "Yakınlaştır"}
+      </button>
+    </div>
+
+    <button className="fullArrow left" onClick={oncekiFoto}>
+      ‹
+    </button>
+
+    <img
+      src={current}
+      alt={ilan.title}
+      className={`fullGalleryImage ${zoomed ? "zoomed" : ""}`}
+      onClick={() => setZoomed((v) => !v)}
+    />
+
+    <button className="fullArrow right" onClick={sonrakiFoto}>
+      ›
+    </button>
+
+    <div className="fullGalleryThumbs">
+      {fotolar.map((foto, index) => (
+        <button
+          key={index}
+          className={aktifFoto === index ? "active" : ""}
+          onClick={() => setAktifFoto(index)}
+        >
+          <img src={foto} alt={`Fotoğraf ${index + 1}`} />
+        </button>
+      ))}
+    </div>
+  </div>
+)}
       <Contact />
     </div>
   );
