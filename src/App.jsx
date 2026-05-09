@@ -1755,7 +1755,7 @@ function Contact() {
         </div>
       </div>
 
-      <p className="contactLocation">Konum: Sakarya / Karasu</p>
+      <p className="contactLocation">Konum:  Yalı Mahallesi , Barbaros Caddesi , No: 115 / 4 , Sakarya / Karasu</p>
 
       <div className="follow">
         <span className="followTitle">Bizi Takip Edin</span>
@@ -1771,9 +1771,16 @@ function Contact() {
           </a>
         </div>
       </div>
-
+<div className="officeMap">
+  <iframe
+    src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d751.5681747789749!2d30.692206415445263!3d41.106735057736046!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x409ddb94e81d7b95%3A0x6516a1ce56d93445!2sHan%20Gayrimenkul!5e0!3m2!1str!2str!4v1778361090974!5m2!1str!2str"
+    loading="lazy"
+    allowFullScreen
+    referrerPolicy="no-referrer-when-downgrade"
+  />
+</div>
       <footer className="footer">
-        © 2026 <strong>Han Gayrimenkul</strong> — Doğru yatırım, güvenle değer katar
+        © 2026 <strong>Han Gayrimenkul</strong> — Doğru Yerde, Doğru Yatırım, Güvenle Değer Katar
       </footer>
     </section>
   );
@@ -4365,7 +4372,22 @@ function Style() {
           height: 50vh;
           min-height: 300px;
         }
-      }
+      }.officeMap {
+      max-width: 900px;
+margin: 28px auto 0;
+  margin-top: 28px;
+  overflow: hidden;
+  border-radius: 28px;
+  border: 1px solid rgba(255,255,255,.12);
+  box-shadow: 0 20px 60px rgba(0,0,0,.28);
+}
+
+.officeMap iframe {
+  width: 100%;
+  height: 260px;
+  border: 0;
+  display: block;
+}
     `}</style>
   );
 }
