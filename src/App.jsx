@@ -13,6 +13,8 @@ import {
 } from "firebase/firestore";
 
 const ADMIN_PASSWORD = "1234";
+const CLOUDINARY_CLOUD_NAME = "depa6zrzr";
+const CLOUDINARY_UPLOAD_PRESET = "han_upload";
 
 const CONTACTS = {
   officePhone: "0530 895 49 19",
@@ -36,8 +38,6 @@ const PROPERTY_TYPES = [
   "Arsa",
   "Tarla",
   "Bahçe",
-  "Ofis",
-  "Dükkan",
 ];
 
 const ICONS = {
@@ -90,7 +90,9 @@ function fotoListesi(ilan) {
 }
 
 function ilkFoto(ilan) {
-  return fotoListesi(ilan)[0] || "";
+  const photos = fotoListesi(ilan);
+  const index = Number(ilan?.coverIndex || 0);
+  return photos[index] || photos[0] || "";
 }
 
 function ilanSlug(ilan) {
@@ -101,6 +103,64 @@ function whatsappLink(ilan) {
   return `https://wa.me/${CONTACTS.whatsapp}?text=Merhaba,%20${encodeURIComponent(
     ilan?.title || "gayrimenkul"
   )}%20ilanı%20hakkında%20bilgi%20almak%20istiyorum.`;
+}
+
+function buildFeatureList(ilan) {
+  const items = [
+    ilan.rooms && { icon: "🛏️", label: "Oda", value: ilan.rooms },
+    ilan.area && { icon: "📐", label: "Alan", value: `${ilan.area} m²` },
+    ilan.type && { icon: "🏠", label: "Tür", value: ilan.type },
+    ilan.status && { icon: "🏷️", label: "Durum", value: ilan.status },
+    ilan.location && { icon: "📍", label: "Konum", value: ilan.location },
+    { icon: "🤝", label: "Danışmanlık", value: "Han Gayrimenkul" },
+  ].filter(Boolean);
+
+  return items;
+}
+
+function shortPropertyNote(ilan) {
+  if (ilan.investmentNote) return ilan.investmentNote;
+
+  const type = (ilan.type || "").toLowerCase();
+
+  if (type.includes("arsa") || type.includes("tarla") || type.includes("bahçe")) {
+    return "Arazi tipi portföylerde konum, imar durumu, yol cephesi ve bölgesel gelişim potansiyeli yatırım kararında belirleyici olur. Detaylı değerlendirme için bizimle iletişime geçebilirsiniz.";
+  }
+
+  if (type.includes("villa") || type.includes("müstakil")) {
+    return "Müstakil yaşam talebi, geniş kullanım alanı ve bölgesel değer artışı potansiyeli nedeniyle bu portföy yatırım ve yaşam amacıyla değerlendirilebilir.";
+  }
+
+  return "Bu portföy; konumu, kullanım potansiyeli ve bölgesel talep açısından yatırım odaklı değerlendirilebilir. Detaylı analiz için bizimle iletişime geçebilirsiniz.";
+}
+
+function shareListing(ilan) {
+  const url = window.location.href;
+  const text = `${ilan.title} - ${ilan.price}`;
+  if (navigator.share) {
+    navigator.share({ title: ilan.title, text, url }).catch(() => {});
+  } else {
+    navigator.clipboard?.writeText(url);
+    alert("İlan bağlantısı kopyalandı.");
+  }
+}
+
+function optimizeCloudinaryUrl(url) {
+  if (!url || !url.includes("/image/upload/")) return url;
+  if (url.includes("/q_auto/f_auto/")) return url;
+  return url.replace("/image/upload/", "/image/upload/q_auto/f_auto/");
+}
+
+function joinPhotos(photos) {
+  return photos.filter(Boolean).join(", ");
+}
+
+function moveArrayItem(arr, fromIndex, toIndex) {
+  const copy = [...arr];
+  if (toIndex < 0 || toIndex >= copy.length) return copy;
+  const [item] = copy.splice(fromIndex, 1);
+  copy.splice(toIndex, 0, item);
+  return copy;
 }
 
 function Header({ detail = false, admin, setAdmin, setAdminOpen }) {
@@ -178,46 +238,227 @@ function AdminPanel({
   setDuzenlenenId,
   bosForm,
 }) {
+  const [uploading, setUploading] = React.useState(false);
+  const [uploadProgress, setUploadProgress] = React.useState("");
+  const [dragActive, setDragActive] = React.useState(false);
+
+  const photos = React.useMemo(() => fotoListesi(form), [form.image]);
+  const coverIndex = Math.min(Number(form.coverIndex || 0), Math.max(photos.length - 1, 0));
+
+  const updatePhotos = (nextPhotos, nextCoverIndex = coverIndex) => {
+    setForm((prev) => ({
+      ...prev,
+      image: joinPhotos(nextPhotos),
+      coverIndex: Math.min(Math.max(nextCoverIndex, 0), Math.max(nextPhotos.length - 1, 0)),
+    }));
+  };
+
+  const uploadFilesToCloudinary = async (files) => {
+    const selectedFiles = Array.from(files || []).filter((file) =>
+      file.type.startsWith("image/")
+    );
+
+    if (selectedFiles.length === 0) {
+      alert("Lütfen fotoğraf dosyası seç.");
+      return;
+    }
+
+    setUploading(true);
+    setUploadProgress(`0/${selectedFiles.length} fotoğraf yüklendi`);
+
+    const uploadedUrls = [];
+
+    try {
+      for (let i = 0; i < selectedFiles.length; i++) {
+        const file = selectedFiles[i];
+        const data = new FormData();
+        data.append("file", file);
+        data.append("upload_preset", CLOUDINARY_UPLOAD_PRESET);
+        data.append("folder", "han-gayrimenkul");
+
+        const response = await fetch(
+          `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`,
+          {
+            method: "POST",
+            body: data,
+          }
+        );
+
+        if (!response.ok) {
+          const errorText = await response.text();
+          throw new Error(errorText || "Cloudinary yükleme hatası");
+        }
+
+        const result = await response.json();
+        uploadedUrls.push(optimizeCloudinaryUrl(result.secure_url));
+        setUploadProgress(`${i + 1}/${selectedFiles.length} fotoğraf yüklendi`);
+      }
+
+      setForm((prev) => {
+        const mevcut = fotoListesi(prev);
+        const combined = [...mevcut, ...uploadedUrls];
+        return {
+          ...prev,
+          image: joinPhotos(combined),
+          coverIndex: Number(prev.coverIndex || 0),
+        };
+      });
+    } catch (error) {
+      console.error(error);
+      alert("Fotoğraf yükleme sırasında hata oluştu. Upload preset ayarını kontrol et.");
+    } finally {
+      setUploading(false);
+      setTimeout(() => setUploadProgress(""), 1800);
+    }
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    setDragActive(false);
+    uploadFilesToCloudinary(e.dataTransfer.files);
+  };
+
+  const removePhoto = (index) => {
+    const next = photos.filter((_, i) => i !== index);
+    const nextCover = coverIndex === index ? 0 : coverIndex > index ? coverIndex - 1 : coverIndex;
+    updatePhotos(next, nextCover);
+  };
+
+  const movePhoto = (index, direction) => {
+    const nextIndex = index + direction;
+    const next = moveArrayItem(photos, index, nextIndex);
+    let nextCover = coverIndex;
+    if (coverIndex === index) nextCover = nextIndex;
+    else if (coverIndex === nextIndex) nextCover = index;
+    updatePhotos(next, nextCover);
+  };
+
   return (
-    <section className="adminPanel">
-      <h2 className="adminTitle">{duzenlenenId ? "İlan Düzenle" : "İlan Ekle"}</h2>
+    <section className="adminPanel proAdminPanel">
+      <div className="adminHead">
+        <div>
+          <p className="adminEyebrow">HAN GAYRİMENKUL YÖNETİM</p>
+          <h2 className="adminTitle">{duzenlenenId ? "İlan Düzenle" : "Yeni İlan Ekle"}</h2>
+        </div>
 
-      <div className="formGrid">
-        <input className="input" placeholder="İlan başlığı" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />
-        <input className="input" placeholder="Fiyat örn: 3.500.000 TL" value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })} />
-        <input className="input" placeholder="Konum" value={form.location} onChange={(e) => setForm({ ...form, location: e.target.value })} />
-        <input className="input" placeholder="Oda örn: 2+1" value={form.rooms} onChange={(e) => setForm({ ...form, rooms: e.target.value })} />
-        <input className="input" placeholder="m² örn: 120" value={form.area} onChange={(e) => setForm({ ...form, area: e.target.value })} />
-
-        <select className="input" value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value })}>
-          <option>Satılık</option>
-          <option>Kiralık</option>
-        </select>
-
-        <select className="input" value={form.type} onChange={(e) => setForm({ ...form, type: e.target.value })}>
-          {PROPERTY_TYPES.filter((x) => x !== "Tümü").map((x) => (
-            <option key={x}>{x}</option>
-          ))}
-        </select>
-
-        <input className="input full" placeholder="Fotoğraf linkleri: link1, link2, link3" value={form.image} onChange={(e) => setForm({ ...form, image: e.target.value })} />
-        <p className="hint">Birden fazla fotoğraf için linkleri virgülle ayır. İlk fotoğraf kapak olarak görünür.</p>
-
-        <input className="input" placeholder="Instagram ilan linki" value={form.instagram} onChange={(e) => setForm({ ...form, instagram: e.target.value })} />
-        <input className="input" placeholder="Google Maps konum linki" value={form.maps} onChange={(e) => setForm({ ...form, maps: e.target.value })} />
-        <textarea className="textarea" placeholder="İlan açıklaması" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
-        <textarea className="textarea" placeholder="Yatırım notu: Bu ilan neden değerli?" value={form.investmentNote} onChange={(e) => setForm({ ...form, investmentNote: e.target.value })} />
+        <label className="featuredToggle">
+          <input
+            type="checkbox"
+            checked={!!form.featured}
+            onChange={(e) => setForm({ ...form, featured: e.target.checked })}
+          />
+          <span>⭐ Öne Çıkan İlan</span>
+        </label>
       </div>
 
-      <button className="addBtn" onClick={ilanKaydet}>
-        {duzenlenenId ? "İlanı Güncelle" : "İlan Ekle"}
-      </button>
+      <div className="adminSection">
+        <h3>Temel Bilgiler</h3>
+        <div className="formGrid">
+          <input className="input" placeholder="İlan başlığı" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />
+          <input className="input" placeholder="Fiyat örn: 3.500.000 TL" value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })} />
+          <input className="input" placeholder="Konum" value={form.location} onChange={(e) => setForm({ ...form, location: e.target.value })} />
+          <input className="input" placeholder="Oda örn: 2+1" value={form.rooms} onChange={(e) => setForm({ ...form, rooms: e.target.value })} />
+          <input className="input" placeholder="m² örn: 120" value={form.area} onChange={(e) => setForm({ ...form, area: e.target.value })} />
 
-      {duzenlenenId && (
-        <button className="cancelBtn" onClick={() => { setDuzenlenenId(null); setForm(bosForm); }}>
-          Vazgeç
+          <select className="input" value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value })}>
+            <option>Satılık</option>
+            <option>Kiralık</option>
+          </select>
+
+          <select className="input" value={form.type} onChange={(e) => setForm({ ...form, type: e.target.value })}>
+            {PROPERTY_TYPES.filter((x) => x !== "Tümü").map((x) => (
+              <option key={x}>{x}</option>
+            ))}
+          </select>
+        </div>
+      </div>
+
+      <div className="adminSection">
+        <h3>Fotoğraf Galerisi</h3>
+        <div
+          className={`uploadBox ${dragActive ? "dragActive" : ""}`}
+          onDragOver={(e) => {
+            e.preventDefault();
+            setDragActive(true);
+          }}
+          onDragLeave={() => setDragActive(false)}
+          onDrop={handleDrop}
+        >
+          <div className="uploadIcon">📸</div>
+          <h3>Fotoğrafları buraya sürükle veya seç</h3>
+          <p>Birden fazla fotoğrafı aynı anda yükleyebilirsin. Linkler otomatik ilana eklenir.</p>
+
+          <label className="uploadBtn">
+            {uploading ? "Yükleniyor..." : "Fotoğraf Seç"}
+            <input
+              type="file"
+              accept="image/*"
+              multiple
+              disabled={uploading}
+              onChange={(e) => uploadFilesToCloudinary(e.target.files)}
+            />
+          </label>
+
+          {uploadProgress && <span className="uploadProgress">{uploadProgress}</span>}
+        </div>
+
+        {photos.length > 0 && (
+          <div className="photoManager">
+            <div className="photoManagerHead">
+              <strong>{photos.length} fotoğraf</strong>
+              <span>Kapak fotoğrafı ve sıralamayı buradan düzenle.</span>
+            </div>
+
+            <div className="photoManageGrid">
+              {photos.map((url, index) => (
+                <div className={`photoManageItem ${coverIndex === index ? "cover" : ""}`} key={`${url}-${index}`}>
+                  <img src={url} alt={`İlan fotoğrafı ${index + 1}`} />
+                  <div className="photoManageOverlay">
+                    <button type="button" onClick={() => setForm({ ...form, coverIndex: index })}>
+                      {coverIndex === index ? "Kapak ✓" : "Kapak Yap"}
+                    </button>
+                    <div className="photoMoveBtns">
+                      <button type="button" disabled={index === 0} onClick={() => movePhoto(index, -1)}>←</button>
+                      <button type="button" disabled={index === photos.length - 1} onClick={() => movePhoto(index, 1)}>→</button>
+                      <button type="button" className="removePhoto" onClick={() => removePhoto(index)}>Sil</button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        <textarea
+          className="textarea imageTextarea"
+          placeholder="Fotoğraf linkleri otomatik buraya gelir. İstersen elle link de ekleyebilirsin."
+          value={form.image}
+          onChange={(e) => setForm({ ...form, image: e.target.value, coverIndex: 0 })}
+        />
+        <p className="hint">İlk linkler otomatik Cloudinary’den gelir. Kapak seçimini yukarıdaki fotoğraf yöneticisinden yapabilirsin.</p>
+      </div>
+
+      <div className="adminSection">
+        <h3>Bağlantılar ve Açıklama</h3>
+        <div className="formGrid">
+          <input className="input" placeholder="Instagram ilan linki" value={form.instagram} onChange={(e) => setForm({ ...form, instagram: e.target.value })} />
+          <input className="input" placeholder="Google Maps konum linki" value={form.maps} onChange={(e) => setForm({ ...form, maps: e.target.value })} />
+          <textarea className="textarea" placeholder="İlan açıklaması" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
+          <textarea className="textarea" placeholder="Yatırım notu: Bu ilan neden değerli?" value={form.investmentNote} onChange={(e) => setForm({ ...form, investmentNote: e.target.value })} />
+        </div>
+      </div>
+
+      <div className="adminActions">
+        <button className="addBtn" onClick={ilanKaydet} disabled={uploading}>
+          {duzenlenenId ? "İlanı Güncelle" : "İlan Ekle"}
         </button>
-      )}
+
+        {duzenlenenId && (
+          <button className="cancelBtn" onClick={() => { setDuzenlenenId(null); setForm(bosForm); }}>
+            Vazgeç
+          </button>
+        )}
+      </div>
     </section>
   );
 }
@@ -250,6 +491,7 @@ function ListingCard({ ilan, admin, ilanDuzenle, ilanSil, favorites, toggleFavor
         <div className="imageWrap">
           <img className="image" src={ilkFoto(ilan)} alt={ilan.title} loading="lazy" />
           <span className="status">{ilan.status || "Satılık"}</span>
+          {ilan.featured && <span className="featuredBadge">⭐ Öne Çıkan</span>}
           {ilan.type && <span className="typeBadge">{ilan.type}</span>}
           {fotolar.length > 1 && <span className="photoCount">{fotolar.length} fotoğraf</span>}
           <FavoriteButton id={ilan.id} favorites={favorites} toggleFavorite={toggleFavorite} compact />
@@ -319,12 +561,14 @@ function Home({
   const [onlyFavorites, setOnlyFavorites] = useState(false);
 
   const gorunenIlanlar = useMemo(() => {
-    return ilanlar.filter((ilan) => {
-      const statusOk = filtre === "Tümü" || ilan.status === filtre;
-      const typeOk = tur === "Tümü" || ilan.type === tur;
-      const favOk = !onlyFavorites || favorites.includes(ilan.id);
-      return statusOk && typeOk && favOk;
-    });
+    return ilanlar
+      .filter((ilan) => {
+        const statusOk = filtre === "Tümü" || ilan.status === filtre;
+        const typeOk = tur === "Tümü" || ilan.type === tur;
+        const favOk = !onlyFavorites || favorites.includes(ilan.id);
+        return statusOk && typeOk && favOk;
+      })
+      .sort((a, b) => Number(!!b.featured) - Number(!!a.featured));
   }, [ilanlar, filtre, tur, onlyFavorites, favorites]);
 
   return (
@@ -552,47 +796,81 @@ function ListingDetail({ ilanlar, favorites, toggleFavorite }) {
           )}
         </section>
 
-        <section className="detailInfo">
+        <section className="detailInfo proDetailInfo">
           <div className="detailTopActions">
             <button className="backToListingsBtn" onClick={goListings}>← İlanlara Geri Dön</button>
-            <FavoriteButton id={ilan.id} favorites={favorites} toggleFavorite={toggleFavorite} />
+            <div className="detailTopRight">
+              <button className="shareBtn" onClick={() => shareListing(ilan)}>↗ Paylaş</button>
+              <FavoriteButton id={ilan.id} favorites={favorites} toggleFavorite={toggleFavorite} />
+            </div>
           </div>
 
           <div className="detailBadges">
             <span>{ilan.status || "Satılık"}</span>
             {ilan.type && <span>{ilan.type}</span>}
+            <span>Güncel Portföy</span>
           </div>
 
           <h2>{ilan.title}</h2>
           <p className="detailLocation">Konum: {ilan.location}</p>
           <p className="detailPrice">{ilan.price}</p>
 
-          <div className="detailSpecs">
-            {ilan.rooms && <span>{ilan.rooms}</span>}
-            {ilan.area && <span>{ilan.area} m²</span>}
-            {ilan.status && <span>{ilan.status}</span>}
-            {ilan.type && <span>{ilan.type}</span>}
+          <div className="detailFeatureGrid">
+            {buildFeatureList(ilan).map((item, index) => (
+              <div className="detailFeature" key={index}>
+                <b>{item.icon}</b>
+                <span>{item.label}</span>
+                <strong>{item.value}</strong>
+              </div>
+            ))}
           </div>
 
-          <div className="detailText">
-            <h3>İlan Açıklaması</h3>
+          <div className="detailText proBox">
+            <div className="boxHeader">
+              <span>01</span>
+              <h3>İlan Açıklaması</h3>
+            </div>
             <p>{ilan.description || "Bu ilan hakkında detaylı bilgi almak için bizimle iletişime geçebilirsiniz."}</p>
           </div>
 
-          <div className="investmentBox">
-            <h3>Yatırım Notu</h3>
-            <p>
-              {ilan.investmentNote ||
-                "Bu portföy; konumu, kullanım potansiyeli ve bölgesel talep açısından yatırım odaklı değerlendirilebilir. Detaylı analiz için bizimle iletişime geçebilirsiniz."}
-            </p>
+          <div className="investmentBox proBox investmentHighlight">
+            <div className="boxHeader">
+              <span>02</span>
+              <h3>Yatırım Notu</h3>
+            </div>
+            <p>{shortPropertyNote(ilan)}</p>
           </div>
 
-          <div className="consultantBox">
-            <h3>Danışmanlık</h3>
-            <p>Han Gayrimenkul ekibi, ilan detayları ve yatırım süreci hakkında size profesyonel destek sağlar.</p>
+          <div className="detailTwoCol">
+            <div className="consultantBox proBox">
+              <div className="boxHeader">
+                <span>03</span>
+                <h3>Danışmanlık</h3>
+              </div>
+              <p>Han Gayrimenkul ekibi, ilan detayları ve yatırım süreci hakkında size profesyonel destek sağlar.</p>
+            </div>
+
+            <div className="locationBox proBox">
+              <div className="boxHeader">
+                <span>04</span>
+                <h3>Konum</h3>
+              </div>
+              <p>{ilan.location || "Sakarya / Karasu"}</p>
+              {ilan.maps ? (
+                <a href={ilan.maps} target="_blank" rel="noreferrer" className="miniMapBtn">Haritada Aç</a>
+              ) : (
+                <small>Konum bilgisi için bizimle iletişime geçebilirsiniz.</small>
+              )}
+            </div>
           </div>
 
-          <div className="detailActions">
+          <div className="trustStrip">
+            <div><strong>Şeffaf</strong><span>Bilgi paylaşımı</span></div>
+            <div><strong>Hızlı</strong><span>WhatsApp dönüşü</span></div>
+            <div><strong>Yerel</strong><span>Karasu uzmanlığı</span></div>
+          </div>
+
+          <div className="detailActions stickyContactActions">
             <a href={whatsappLink(ilan)} target="_blank" rel="noreferrer" className="whatsapp big">
               <LogoIcon type="whatsapp" /> WhatsApp ile Bilgi Al
             </a>
@@ -708,6 +986,8 @@ function App() {
     maps: "",
     description: "",
     investmentNote: "",
+    featured: false,
+    coverIndex: 0,
   };
 
   const [form, setForm] = useState(bosForm);
@@ -742,6 +1022,8 @@ function App() {
       ...form,
       type: form.type || "Daire",
       investmentNote: form.investmentNote || "",
+      featured: !!form.featured,
+      coverIndex: Number(form.coverIndex || 0),
     };
 
     if (duzenlenenId) {
@@ -779,6 +1061,8 @@ function App() {
       maps: ilan.maps || "",
       description: ilan.description || "",
       investmentNote: ilan.investmentNote || "",
+      featured: !!ilan.featured,
+      coverIndex: Number(ilan.coverIndex || 0),
     });
 
     setDuzenlenenId(ilan.id);
@@ -1136,11 +1420,86 @@ function Style() {
         gap: 12px;
       }
 
+      .uploadBox {
+        grid-column: 1 / -1;
+        border: 1px dashed rgba(255,138,0,.48);
+        background:
+          radial-gradient(circle at top left, rgba(255,138,0,.14), transparent 42%),
+          rgba(255,255,255,.045);
+        border-radius: 24px;
+        padding: 26px 18px;
+        text-align: center;
+        transition: .25s ease;
+      }
+
+      .uploadBox.dragActive {
+        border-color: var(--orange);
+        background: rgba(255,138,0,.12);
+        transform: translateY(-2px);
+      }
+
+      .uploadIcon {
+        font-size: 38px;
+        margin-bottom: 6px;
+      }
+
+      .uploadBox h3 {
+        margin: 0 0 8px;
+        color: #fff;
+        font-size: 22px;
+      }
+
+      .uploadBox p {
+        margin: 0 auto 16px;
+        max-width: 620px;
+        color: #bdbdbd;
+        line-height: 1.5;
+      }
+
+      .uploadBtn {
+        min-height: 50px;
+        padding: 0 24px;
+        border-radius: 999px;
+        border: 1px solid rgba(255,255,255,.75);
+        background: var(--orange);
+        color: #050505;
+        font-weight: 950;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 18px 45px rgba(255,138,0,.16);
+      }
+
+      .uploadBtn input {
+        display: none;
+      }
+
+      .uploadProgress {
+        display: block;
+        margin-top: 12px;
+        color: var(--orange);
+        font-weight: 900;
+      }
+
+      .imageTextarea {
+        min-height: 86px;
+        font-size: 13px;
+      }
+
       .input.full, .textarea, .hint { grid-column: 1 / -1; }
       .textarea { min-height: 110px; resize: vertical; }
       .hint { color: #aaa; margin: 0; font-size: 13px; }
       .addBtn { margin-top: 18px; background: var(--orange); color: #050505; }
       .cancelBtn { margin-top: 18px; margin-left: 10px; background: transparent; }
+      select.input {
+  color: white;
+}
+
+select.input option {
+  background: #151515;
+  color: white;
+}
 
       .listings {
         max-width: 1260px;
@@ -1212,6 +1571,194 @@ function Style() {
         color: var(--orange);
         background: rgba(255,138,0,.10);
         box-shadow: 0 0 28px rgba(255,138,0,.10);
+      }
+
+      .typeFilter {
+        position: relative;
+        overflow: hidden;
+      }
+
+      .typeFilter:hover {
+        border-color: rgba(255,138,0,.55);
+        transform: translateY(-1px);
+      }
+
+      .featuredBadge {
+        position: absolute;
+        left: 16px;
+        top: 64px;
+        z-index: 3;
+        padding: 8px 13px;
+        border-radius: 999px;
+        background: rgba(255,138,0,.16);
+        border: 1px solid rgba(255,138,0,.55);
+        color: #fff;
+        font-weight: 950;
+        backdrop-filter: blur(12px);
+      }
+
+      .proAdminPanel {
+        background:
+          radial-gradient(circle at top left, rgba(255,138,0,.16), transparent 36%),
+          linear-gradient(135deg, rgba(255,255,255,.06), rgba(255,255,255,.026));
+      }
+
+      .adminHead {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 18px;
+        margin-bottom: 22px;
+      }
+
+      .adminEyebrow {
+        margin: 0 0 6px;
+        color: var(--orange);
+        letter-spacing: 2px;
+        font-size: 12px;
+        font-weight: 950;
+      }
+
+      .featuredToggle {
+        min-height: 52px;
+        padding: 0 18px;
+        border-radius: 999px;
+        border: 1px solid rgba(255,138,0,.42);
+        background: rgba(255,138,0,.08);
+        color: white;
+        font-weight: 950;
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        cursor: pointer;
+        white-space: nowrap;
+      }
+
+      .featuredToggle input {
+        width: 18px;
+        height: 18px;
+        accent-color: var(--orange);
+      }
+
+      .adminSection {
+        margin-top: 18px;
+        padding: 20px;
+        border-radius: 24px;
+        border: 1px solid rgba(255,255,255,.10);
+        background: rgba(0,0,0,.18);
+      }
+
+      .adminSection h3 {
+        margin: 0 0 14px;
+        color: #fff;
+        font-size: 20px;
+      }
+
+      .photoManager {
+        margin-top: 18px;
+        border-radius: 22px;
+        border: 1px solid rgba(255,255,255,.12);
+        background: rgba(255,255,255,.035);
+        padding: 16px;
+      }
+
+      .photoManagerHead {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 14px;
+      }
+
+      .photoManagerHead strong {
+        color: var(--orange);
+        font-size: 18px;
+      }
+
+      .photoManagerHead span {
+        color: #bdbdbd;
+        font-size: 13px;
+      }
+
+      .photoManageGrid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+        gap: 12px;
+      }
+
+      .photoManageItem {
+        position: relative;
+        height: 120px;
+        border-radius: 18px;
+        overflow: hidden;
+        border: 2px solid rgba(255,255,255,.10);
+        background: #000;
+      }
+
+      .photoManageItem.cover {
+        border-color: var(--orange);
+        box-shadow: 0 0 25px rgba(255,138,0,.16);
+      }
+
+      .photoManageItem img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+      }
+
+      .photoManageOverlay {
+        position: absolute;
+        inset: 0;
+        padding: 8px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        background: linear-gradient(to bottom, rgba(0,0,0,.28), rgba(0,0,0,.78));
+        opacity: 0;
+        transition: .2s ease;
+      }
+
+      .photoManageItem:hover .photoManageOverlay,
+      .photoManageItem.cover .photoManageOverlay {
+        opacity: 1;
+      }
+
+      .photoManageOverlay button {
+        border: 1px solid rgba(255,255,255,.20);
+        background: rgba(0,0,0,.56);
+        color: white;
+        border-radius: 999px;
+        padding: 7px 9px;
+        font-weight: 900;
+        cursor: pointer;
+        backdrop-filter: blur(10px);
+      }
+
+      .photoMoveBtns {
+        display: flex;
+        gap: 6px;
+        flex-wrap: wrap;
+      }
+
+      .photoMoveBtns button {
+        flex: 1;
+        min-width: 34px;
+      }
+
+      .photoMoveBtns .removePhoto {
+        background: rgba(176,0,32,.82);
+      }
+
+      .photoMoveBtns button:disabled {
+        opacity: .35;
+        cursor: not-allowed;
+      }
+
+      .adminActions {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
       }
 
       .favoriteFilterRow {
@@ -1570,6 +2117,156 @@ function Style() {
       .detailPrice { font-size: 44px; }
       .detailSpecs { justify-content: flex-start; }
 
+      .detailTopRight {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .shareBtn {
+        min-height: 48px;
+        padding: 0 18px;
+        border-radius: 999px;
+        border: 1px solid rgba(255,255,255,.16);
+        background: rgba(255,255,255,.055);
+        color: white;
+        font-weight: 950;
+        cursor: pointer;
+      }
+
+      .detailFeatureGrid {
+        margin-top: 22px;
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
+      }
+
+      .detailFeature {
+        padding: 16px;
+        border-radius: 18px;
+        border: 1px solid rgba(255,255,255,.12);
+        background: rgba(255,255,255,.04);
+        display: grid;
+        grid-template-columns: auto 1fr;
+        gap: 3px 10px;
+        align-items: center;
+      }
+
+      .detailFeature b {
+        grid-row: span 2;
+        font-size: 25px;
+      }
+
+      .detailFeature span {
+        color: #a9a9a9;
+        font-size: 12px;
+        font-weight: 850;
+        text-transform: uppercase;
+        letter-spacing: .7px;
+      }
+
+      .detailFeature strong {
+        font-size: 16px;
+        color: #fff;
+      }
+
+      .proBox {
+        position: relative;
+        overflow: hidden;
+      }
+
+      .proBox::before {
+        content: "";
+        position: absolute;
+        inset: 0 auto 0 0;
+        width: 3px;
+        background: linear-gradient(to bottom, transparent, var(--orange), transparent);
+        opacity: .8;
+      }
+
+      .boxHeader {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 10px;
+      }
+
+      .boxHeader span {
+        width: 34px;
+        height: 34px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        background: rgba(255,138,0,.14);
+        color: var(--orange);
+        border: 1px solid rgba(255,138,0,.35);
+        font-size: 13px;
+        font-weight: 950;
+      }
+
+      .boxHeader h3 {
+        margin: 0;
+      }
+
+      .investmentHighlight {
+        background:
+          radial-gradient(circle at top right, rgba(255,138,0,.16), transparent 40%),
+          rgba(255,255,255,.035);
+      }
+
+      .detailTwoCol {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 14px;
+      }
+
+      .miniMapBtn {
+        display: inline-flex;
+        margin-top: 14px;
+        padding: 10px 15px;
+        border-radius: 999px;
+        border: 1px solid rgba(255,138,0,.45);
+        color: var(--orange);
+        text-decoration: none;
+        font-weight: 950;
+      }
+
+      .locationBox small {
+        display: block;
+        color: #aaa;
+        line-height: 1.5;
+      }
+
+      .trustStrip {
+        margin-top: 22px;
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 10px;
+      }
+
+      .trustStrip div {
+        padding: 14px 10px;
+        border-radius: 18px;
+        text-align: center;
+        border: 1px solid rgba(255,255,255,.12);
+        background: rgba(0,0,0,.24);
+      }
+
+      .trustStrip strong {
+        display: block;
+        color: var(--orange);
+        font-weight: 950;
+      }
+
+      .trustStrip span {
+        display: block;
+        margin-top: 3px;
+        color: #bdbdbd;
+        font-size: 12px;
+        font-weight: 800;
+      }
+
       .detailText, .investmentBox, .consultantBox {
         margin-top: 22px;
         padding: 22px;
@@ -1737,6 +2434,43 @@ function Style() {
           white-space: nowrap;
         }
 
+        .adminHead {
+          align-items: stretch;
+          flex-direction: column;
+        }
+
+        .featuredToggle {
+          width: 100%;
+          justify-content: center;
+        }
+
+        .adminSection {
+          padding: 16px;
+        }
+
+        .photoManagerHead {
+          align-items: flex-start;
+          flex-direction: column;
+        }
+
+        .photoManageGrid {
+          grid-template-columns: repeat(2, 1fr);
+        }
+
+        .photoManageItem {
+          height: 118px;
+        }
+
+        .photoManageOverlay {
+          opacity: 1;
+        }
+
+        .featuredBadge {
+          top: 62px;
+          left: 14px;
+          font-size: 12px;
+        }
+
         .cards {
           grid-template-columns: 1fr;
           gap: 24px;
@@ -1830,6 +2564,50 @@ function Style() {
 
         .detailTopActions {
           display: none;
+        }
+
+        .detailFeatureGrid {
+          grid-template-columns: 1fr 1fr;
+          gap: 10px;
+        }
+
+        .detailFeature {
+          padding: 14px 12px;
+          border-radius: 16px;
+        }
+
+        .detailFeature b {
+          font-size: 21px;
+        }
+
+        .detailFeature strong {
+          font-size: 14px;
+        }
+
+        .detailTwoCol {
+          grid-template-columns: 1fr;
+          gap: 0;
+        }
+
+        .trustStrip {
+          grid-template-columns: 1fr;
+        }
+
+        .stickyContactActions {
+          position: sticky;
+          bottom: 10px;
+          z-index: 20;
+          padding: 10px;
+          margin-left: -10px;
+          margin-right: -10px;
+          border-radius: 22px;
+          background: rgba(5,5,5,.72);
+          border: 1px solid rgba(255,255,255,.10);
+          backdrop-filter: blur(16px);
+        }
+
+        .shareBtn {
+          min-height: 44px;
         }
 
         .detailInfo h2 {
