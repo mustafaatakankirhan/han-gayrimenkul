@@ -88,7 +88,34 @@ const BLOG_POSTS = [
       "Yazlık alırken sadece manzara değil; bina kalitesi, ulaşım, aidat, kira potansiyeli ve konum da önemlidir.",
     content:
       "Yazlık alımında en sık yapılan hata sadece dış görünüşe veya denize yakınlığa bakmaktır. Oysa bina yaşı, deprem yönetmeliği, site düzeni, aidat, otopark, ulaşım kolaylığı ve sezon dışı kullanım imkânı da değerlendirilmelidir. Doğru yazlık hem yaşam konforu hem de yatırım getirisi sağlar.",
+  },,
+  {
+    slug: "karasu-limandere-gayrimenkul-rehberi",
+    title: "Karasu Limandere gayrimenkul rehberi",
+    category: "Bölge",
+    excerpt:
+      "Limandere bölgesinde arsa, yazlık ve yatırım amaçlı gayrimenkul alırken dikkat edilmesi gereken başlıklar.",
+    content:
+      "Limandere, Karasu çevresinde yatırım ve yazlık kullanım amacıyla değerlendirilen bölgelerden biridir. Bölge seçiminde ulaşım, imar durumu, yol cephesi, çevre yapılaşması ve uzun vadeli gelişim potansiyeli birlikte incelenmelidir.",
   },
+  {
+    slug: "karasu-yali-mahallesi-emlak-rehberi",
+    title: "Karasu Yalı Mahallesi emlak rehberi",
+    category: "Bölge",
+    excerpt:
+      "Yalı Mahallesi’nde konut, yazlık ve yatırım amaçlı portföy arayanlar için kısa değerlendirme.",
+    content:
+      "Karasu Yalı Mahallesi, sahil hattına yakınlığı ve yazlık talebiyle dikkat çeken bölgelerden biridir. Konut alırken bina kalitesi, denize mesafe, sosyal imkanlar ve sezonluk kira potansiyeli birlikte değerlendirilmelidir.",
+  },
+  {
+    slug: "karasu-aziziye-bolgesi-yatirim-notlari",
+    title: "Karasu Aziziye bölgesi yatırım notları",
+    category: "Bölge",
+    excerpt:
+      "Aziziye ve çevresinde gayrimenkul yatırımı yaparken konum, gelişim aksı ve portföy niteliği önemlidir.",
+    content:
+      "Aziziye bölgesi, Karasu’da farklı portföy tipleriyle değerlendirilebilecek alanlardan biridir. Yatırım sürecinde tapu durumu, ulaşım, altyapı, çevre yapılaşması ve bölgedeki talep dikkatle analiz edilmelidir.",
+  }
 ];
 
 
@@ -300,6 +327,53 @@ function generateInvestmentNote(form) {
   return `${location} bölgesindeki bu ${status.toLowerCase()} ${type.toLowerCase()}, kira getirisi, konum avantajı ve bölgesel talep açısından yatırım odaklı değerlendirilebilir. Detaylı analiz için portföyün çevre, ulaşım ve kullanım potansiyeli birlikte incelenmelidir.`;
 }
 
+function generateInstagramCaption(form) {
+  const title = safeText(form.title) || "Yeni portföyümüz";
+  const location = safeText(form.location) || "Sakarya / Karasu";
+  const type = safeText(form.type) || "gayrimenkul";
+  const status = safeText(form.status) || "Satılık";
+  const price = safeText(form.price);
+  const rooms = safeText(form.rooms);
+  const area = safeText(form.area);
+
+  return `${title}
+
+📍 ${location}
+🏡 ${status} ${type}
+${rooms ? `🛏️ ${rooms}` : ""}
+${area ? `📐 ${area} m²` : ""}
+${price ? `💰 ${price}` : ""}
+
+Detaylı bilgi ve yerinde sunum için bizimle iletişime geçebilirsiniz.
+
+#hangayrimenkul #karasuemlak #sakaryaemlak #karasusatılık #karasuarsa #karasuvilla #gayrimenkul #emlakdanışmanı`;
+}
+
+function generateReelsText(form) {
+  const location = safeText(form.location) || "Karasu";
+  const type = safeText(form.type) || "gayrimenkul";
+
+  return `🎥 Reels Metni:
+
+${location} bölgesinde ${type.toLowerCase()} arayanlar için yeni portföyümüz yayında.
+
+Öne çıkan detaylar:
+- Konum avantajı
+- Yatırım potansiyeli
+- Han Gayrimenkul güvencesi
+
+Detaylı bilgi için bize WhatsApp üzerinden ulaşabilirsiniz.
+
+Han Gayrimenkul — yatırımınıza güvenle değer.`;
+}
+
+function optimizeCloudinaryVideoUrl(url) {
+  if (!url || !url.includes("/video/upload/")) return url;
+  if (url.includes("/q_auto/")) return url;
+  return url.replace("/video/upload/", "/video/upload/q_auto/");
+}
+
+
 function joinPhotos(photos) {
   return photos.filter(Boolean).join(", ");
 }
@@ -448,6 +522,7 @@ function AdminPanel({
   bosForm,
 }) {
   const [uploading, setUploading] = React.useState(false);
+  const [videoUploading, setVideoUploading] = React.useState(false);
   const [uploadProgress, setUploadProgress] = React.useState("");
   const [dragActive, setDragActive] = React.useState(false);
 
@@ -527,6 +602,47 @@ function AdminPanel({
     } finally {
       setUploading(false);
       setTimeout(() => setUploadProgress(""), 1800);
+    }
+  };
+
+  const uploadVideoToCloudinary = async (file) => {
+    if (!file) return;
+
+    if (!file.type.startsWith("video/")) {
+      alert("Lütfen video dosyası seç.");
+      return;
+    }
+
+    setVideoUploading(true);
+
+    try {
+      const data = new FormData();
+      data.append("file", file);
+      data.append("upload_preset", CLOUDINARY_UPLOAD_PRESET);
+      data.append("folder", "han-gayrimenkul-videolar");
+
+   const response = await fetch(
+  `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/auto/upload`,
+  {
+    method: "POST",
+    body: data,
+  }
+);
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(errorText || "Cloudinary video yükleme hatası");
+      }
+
+      const result = await response.json();
+      setForm((prev) => ({
+        ...prev,
+        videoUrl: optimizeCloudinaryVideoUrl(result.secure_url),
+      }));
+    } catch (error) {
+      console.error(error);
+      alert("Video yükleme sırasında hata oluştu. Video boyutu veya Cloudinary preset ayarını kontrol et.");
+    } finally {
+      setVideoUploading(false);
     }
   };
 
@@ -670,6 +786,68 @@ function AdminPanel({
       </div>
 
       <div className="adminSection">
+        <h3>Video ve Sosyal İçerik</h3>
+
+        <div className="videoUploadBox">
+          <div>
+            <strong>🎥 İlan Videosu</strong>
+            <p>Tek video yükle. Villa, müstakil ev ve özel portföylerde premium etki sağlar.</p>
+          </div>
+
+          <label className="uploadBtn">
+            {videoUploading ? "Video Yükleniyor..." : "Video Seç"}
+            <input
+              type="file"
+              accept="video/*"
+              disabled={videoUploading}
+              onChange={(e) => uploadVideoToCloudinary(e.target.files?.[0])}
+            />
+          </label>
+        </div>
+
+        <input
+          className="input full"
+          placeholder="Video linki otomatik buraya gelir. İstersen elle video linki de ekleyebilirsin."
+          value={form.videoUrl}
+          onChange={(e) => setForm({ ...form, videoUrl: e.target.value })}
+        />
+
+        {form.videoUrl && (
+          <div className="adminVideoPreview">
+            <video src={form.videoUrl} controls playsInline />
+          </div>
+        )}
+
+        <div className="aiTools">
+          <button
+            type="button"
+            onClick={() => setForm({ ...form, socialCaption: generateInstagramCaption(form) })}
+          >
+            📱 Instagram Açıklaması Oluştur
+          </button>
+          <button
+            type="button"
+            onClick={() => setForm({ ...form, reelsText: generateReelsText(form) })}
+          >
+            🎬 Reels Metni Oluştur
+          </button>
+        </div>
+
+        <textarea
+          className="textarea"
+          placeholder="Instagram açıklaması"
+          value={form.socialCaption}
+          onChange={(e) => setForm({ ...form, socialCaption: e.target.value })}
+        />
+        <textarea
+          className="textarea"
+          placeholder="Reels metni"
+          value={form.reelsText}
+          onChange={(e) => setForm({ ...form, reelsText: e.target.value })}
+        />
+      </div>
+
+      <div className="adminSection">
         <h3>Bağlantılar ve Açıklama</h3>
         <div className="formGrid">
           <input className="input" placeholder="Instagram ilan linki" value={form.instagram} onChange={(e) => setForm({ ...form, instagram: e.target.value })} />
@@ -738,6 +916,7 @@ function ListingCard({ ilan, admin, ilanDuzenle, ilanSil, favorites, toggleFavor
           <img className="image" src={ilkFoto(ilan)} alt={ilan.title} loading="lazy" />
           <span className="status">{ilan.status || "Satılık"}</span>
           {ilan.featured && <span className="featuredBadge">⭐ Öne Çıkan</span>}
+          {ilan.videoUrl && <span className="videoBadge">▶ Video</span>}
           {ilan.type && <span className="typeBadge">{ilan.type}</span>}
           {fotolar.length > 1 && <span className="photoCount">{fotolar.length} fotoğraf</span>}
           <FavoriteButton id={ilan.id} favorites={favorites} toggleFavorite={toggleFavorite} compact />
@@ -969,6 +1148,29 @@ function Home({
         </div>
       </section>
 
+      <section className="whyUsSection">
+        <p className="sectionLabel">NEDEN HAN GAYRİMENKUL?</p>
+        <h2 className="sectionTitle">Güven veren dijital gayrimenkul deneyimi</h2>
+
+        <div className="whyUsGrid">
+          <div><span>🏠</span><h3>Bölge Uzmanlığı</h3><p>Karasu ve çevresindeki portföyleri konum, talep ve yatırım potansiyeliyle değerlendiriyoruz.</p></div>
+          <div><span>🤝</span><h3>Şeffaf Danışmanlık</h3><p>Portföy bilgilerini açık, net ve güvenilir şekilde sunarak doğru karar almanıza yardımcı oluyoruz.</p></div>
+          <div><span>📸</span><h3>Güçlü Dijital Sunum</h3><p>Fotoğraf, video, detay sayfası ve hızlı iletişimle portföyleri modern şekilde sergiliyoruz.</p></div>
+          <div><span>💰</span><h3>Yatırım Odaklı Bakış</h3><p>Sadece bugünkü fiyatı değil, gelecekteki değer potansiyelini de dikkate alıyoruz.</p></div>
+        </div>
+      </section>
+
+      <section className="testimonialsSection">
+        <p className="sectionLabel">MÜŞTERİ DENEYİMİ</p>
+        <h2 className="sectionTitle">Güven, hız ve doğru yönlendirme</h2>
+
+        <div className="testimonialGrid">
+          <div><strong>“İlgili ve hızlı dönüş aldık.”</strong><p>Portföy bilgileri netti, süreç boyunca hızlı iletişim kuruldu.</p><span>Han Gayrimenkul müşterisi</span></div>
+          <div><strong>“Karasu bölgesi için doğru yönlendirme.”</strong><p>Yatırım açısından konum ve portföy değerlendirmesi çok yardımcı oldu.</p><span>Yatırım amaçlı alıcı</span></div>
+          <div><strong>“Modern ve güven veren sunum.”</strong><p>İlan detayları, fotoğraflar ve iletişim süreci oldukça profesyoneldi.</p><span>Portföy inceleyen müşteri</span></div>
+        </div>
+      </section>
+
       <section id="blog" className="blogSection">
         <p className="sectionLabel">KARASU REHBERİ</p>
         <h2 className="sectionTitle">Yatırım ve Gayrimenkul Rehberi</h2>
@@ -1138,6 +1340,16 @@ function ListingDetail({ ilanlar, favorites, toggleFavorite }) {
                   <img src={foto} alt={`Fotoğraf ${index + 1}`} />
                 </button>
               ))}
+            </div>
+          )}
+
+          {ilan.videoUrl && (
+            <div className="detailVideoBox">
+              <div className="boxHeader">
+                <span>▶</span>
+                <h3>Video Tur</h3>
+              </div>
+              <video src={ilan.videoUrl} controls playsInline preload="metadata" />
             </div>
           )}
         </section>
@@ -1558,6 +1770,9 @@ function App() {
     maps: "",
     description: "",
     investmentNote: "",
+    videoUrl: "",
+    socialCaption: "",
+    reelsText: "",
     featured: false,
     coverIndex: 0,
   };
@@ -1594,6 +1809,9 @@ function App() {
       ...form,
       type: form.type || "Daire",
       investmentNote: form.investmentNote || "",
+      videoUrl: form.videoUrl || "",
+      socialCaption: form.socialCaption || "",
+      reelsText: form.reelsText || "",
       featured: !!form.featured,
       coverIndex: Number(form.coverIndex || 0),
     };
@@ -1633,6 +1851,9 @@ function App() {
       maps: ilan.maps || "",
       description: ilan.description || "",
       investmentNote: ilan.investmentNote || "",
+      videoUrl: ilan.videoUrl || "",
+      socialCaption: ilan.socialCaption || "",
+      reelsText: ilan.reelsText || "",
       featured: !!ilan.featured,
       coverIndex: Number(ilan.coverIndex || 0),
     });
@@ -3535,6 +3756,125 @@ function Style() {
         background: rgba(176,0,32,.82);
       }
 
+      
+      .videoBadge {
+        position: absolute;
+        right: 16px;
+        bottom: 16px;
+        z-index: 4;
+        padding: 8px 13px;
+        border-radius: 999px;
+        background: rgba(255,255,255,.12);
+        border: 1px solid rgba(255,255,255,.28);
+        color: white;
+        font-weight: 950;
+        backdrop-filter: blur(12px);
+      }
+
+      .videoUploadBox {
+        grid-column: 1 / -1;
+        padding: 18px;
+        border-radius: 22px;
+        border: 1px solid rgba(255,255,255,.12);
+        background: rgba(255,255,255,.04);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 18px;
+      }
+
+      .videoUploadBox strong {
+        color: var(--orange);
+        font-size: 20px;
+      }
+
+      .videoUploadBox p {
+        margin: 6px 0 0;
+        color: #bbb;
+      }
+
+      .adminVideoPreview {
+        grid-column: 1 / -1;
+        border-radius: 22px;
+        overflow: hidden;
+        background: #000;
+        border: 1px solid rgba(255,255,255,.12);
+      }
+
+      .adminVideoPreview video {
+        width: 100%;
+        max-height: 420px;
+        display: block;
+      }
+
+      .detailVideoBox {
+        margin-top: 18px;
+        padding: 18px;
+        border-radius: 24px;
+        border: 1px solid rgba(255,255,255,.12);
+        background: rgba(255,255,255,.04);
+      }
+
+      .detailVideoBox video {
+        width: 100%;
+        border-radius: 18px;
+        background: #000;
+        display: block;
+      }
+
+      .whyUsSection,
+      .testimonialsSection {
+        max-width: 1180px;
+        margin: 0 auto;
+        padding: 42px 7% 54px;
+      }
+
+      .whyUsGrid,
+      .testimonialGrid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 18px;
+      }
+
+      .testimonialGrid {
+        grid-template-columns: repeat(3, 1fr);
+      }
+
+      .whyUsGrid > div,
+      .testimonialGrid > div {
+        padding: 24px;
+        border-radius: 26px;
+        border: 1px solid rgba(255,255,255,.12);
+        background:
+          radial-gradient(circle at top right, rgba(255,138,0,.10), transparent 45%),
+          rgba(255,255,255,.04);
+      }
+
+      .whyUsGrid span {
+        display: inline-flex;
+        font-size: 32px;
+        margin-bottom: 12px;
+      }
+
+      .whyUsGrid h3,
+      .testimonialGrid strong {
+        color: white;
+        font-size: 20px;
+        line-height: 1.25;
+      }
+
+      .whyUsGrid p,
+      .testimonialGrid p {
+        color: #c9c9c9;
+        line-height: 1.6;
+      }
+
+      .testimonialGrid span {
+        color: var(--orange);
+        font-weight: 950;
+        font-size: 13px;
+      }
+
       @media (max-width: 980px) {
         .desktopNav { display: none; }
         .statsGrid { grid-template-columns: repeat(2, 1fr); }
@@ -3591,6 +3931,28 @@ function Style() {
 
         .adminListingCard {
           grid-template-rows: 210px 1fr auto;
+        }
+
+
+        .videoUploadBox {
+          align-items: stretch;
+          flex-direction: column;
+        }
+
+        .whyUsSection,
+        .testimonialsSection {
+          padding: 34px 14px 44px;
+        }
+
+        .whyUsGrid,
+        .testimonialGrid {
+          grid-template-columns: 1fr;
+        }
+
+        .detailVideoBox {
+          margin: 14px 0 0;
+          border-radius: 18px;
+          padding: 12px;
         }
 
         .siteHeader {
