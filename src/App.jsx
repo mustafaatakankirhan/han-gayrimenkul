@@ -252,6 +252,54 @@ function optimizeCloudinaryUrl(url) {
   return url.replace("/image/upload/", "/image/upload/q_auto/f_auto/");
 }
 
+function safeText(value) {
+  return value && String(value).trim() ? String(value).trim() : "";
+}
+
+function generateListingDescription(form) {
+  const title = safeText(form.title) || "bu portföy";
+  const location = safeText(form.location) || "Sakarya / Karasu";
+  const type = safeText(form.type) || "gayrimenkul";
+  const status = safeText(form.status) || "Satılık";
+  const rooms = safeText(form.rooms);
+  const area = safeText(form.area);
+  const price = safeText(form.price);
+
+  const details = [
+    rooms && `${rooms} oda planı`,
+    area && `${area} m² kullanım alanı`,
+    price && `${price} fiyat bilgisi`,
+  ].filter(Boolean);
+
+  const detailSentence = details.length
+    ? ` ${details.join(", ")} ile öne çıkan bu portföy,`
+    : " Bu portföy,";
+
+  if (["Arsa", "Tarla", "Bahçe"].includes(type)) {
+    return `${location} bölgesinde yer alan ${title}, ${status.toLowerCase()} ${type.toLowerCase()} arayanlar için dikkat çekici bir fırsattır. Konum avantajı, kullanım potansiyeli ve bölgesel gelişim beklentisiyle yatırım odaklı değerlendirilebilir. Tapu, konum ve detaylı bilgi için Han Gayrimenkul ile iletişime geçebilirsiniz.`;
+  }
+
+  return `${location} bölgesinde yer alan ${title}, ${status.toLowerCase()} ${type.toLowerCase()} arayanlar için öne çıkan bir seçenektir.${detailSentence} hem yaşam hem de yatırım amacıyla değerlendirilebilecek niteliktedir. Detaylı bilgi, yerinde sunum ve randevu için Han Gayrimenkul ile iletişime geçebilirsiniz.`;
+}
+
+function generateInvestmentNote(form) {
+  const location = safeText(form.location) || "Sakarya / Karasu";
+  const type = safeText(form.type) || "gayrimenkul";
+  const status = safeText(form.status) || "Satılık";
+  const area = safeText(form.area);
+  const rooms = safeText(form.rooms);
+
+  if (["Arsa", "Tarla", "Bahçe"].includes(type)) {
+    return `${location} bölgesindeki bu ${type.toLowerCase()}, arazi yatırımı düşünenler için konum ve gelişim potansiyeli açısından değerlendirilebilir. Yol cephesi, imar durumu, çevre yapılaşması ve bölgesel talep detaylı incelendiğinde uzun vadeli yatırım fırsatı sunabilir.`;
+  }
+
+  if (type === "Villa" || type === "Müstakil Ev") {
+    return `${location} bölgesinde müstakil yaşam talebi güçlüdür. ${rooms ? `${rooms} planı` : "Geniş kullanım imkânı"} ve ${area ? `${area} m² alanı` : "kullanım avantajı"} ile bu portföy hem yaşam hem de uzun vadeli değer artışı açısından öne çıkabilir.`;
+  }
+
+  return `${location} bölgesindeki bu ${status.toLowerCase()} ${type.toLowerCase()}, kira getirisi, konum avantajı ve bölgesel talep açısından yatırım odaklı değerlendirilebilir. Detaylı analiz için portföyün çevre, ulaşım ve kullanım potansiyeli birlikte incelenmelidir.`;
+}
+
 function joinPhotos(photos) {
   return photos.filter(Boolean).join(", ");
 }
@@ -299,14 +347,7 @@ function Header({ detail = false, admin, setAdmin, setAdminOpen }) {
             <button className="navPill backPill" onClick={goListings}>← Geri Git</button>
             <Link to="/" className="navPill homePill">Ana Sayfa</Link>
           </>
-        ) : (
-          <button
-            className="navPill"
-            onClick={() => (admin ? setAdmin(false) : setAdminOpen((v) => !v))}
-          >
-            {admin ? "Çıkış" : "Yönetim"}
-          </button>
-        )}
+        ) : null}
         <TurkishFlag />
       </div>
     </header>
@@ -633,6 +674,21 @@ function AdminPanel({
         <div className="formGrid">
           <input className="input" placeholder="Instagram ilan linki" value={form.instagram} onChange={(e) => setForm({ ...form, instagram: e.target.value })} />
           <input className="input" placeholder="Google Maps konum linki" value={form.maps} onChange={(e) => setForm({ ...form, maps: e.target.value })} />
+          <div className="aiTools">
+            <button
+              type="button"
+              onClick={() => setForm({ ...form, description: generateListingDescription(form) })}
+            >
+              ✨ Açıklama Oluştur
+            </button>
+            <button
+              type="button"
+              onClick={() => setForm({ ...form, investmentNote: generateInvestmentNote(form) })}
+            >
+              💰 Yatırım Notu Oluştur
+            </button>
+          </div>
+
           <textarea className="textarea" placeholder="İlan açıklaması" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
           <textarea className="textarea" placeholder="Yatırım notu: Bu ilan neden değerli?" value={form.investmentNote} onChange={(e) => setForm({ ...form, investmentNote: e.target.value })} />
         </div>
@@ -825,19 +881,7 @@ function Home({
           </div>
         </div>
       </section>
-
-      {admin && (
-        <AdminPanel
-          form={form}
-          setForm={setForm}
-          duzenlenenId={duzenlenenId}
-          ilanKaydet={ilanKaydet}
-          setDuzenlenenId={setDuzenlenenId}
-          bosForm={bosForm}
-        />
-      )}
-
-      <section id="ilanlar" className="listings">
+<section id="ilanlar" className="listings">
         <p className="sectionLabel">PORTFÖYLERİMİZ</p>
         <h2 className="sectionTitle">Güncel İlanlar</h2>
 
@@ -940,9 +984,6 @@ function Home({
           ))}
         </div>
       </section>
-
-      
-    
 
       <Contact />
     </div>
@@ -1192,57 +1233,7 @@ function ListingDetail({ ilanlar, favorites, toggleFavorite }) {
           </div>
         </section>
       </main>
-{fullGallery && (
-  <div
-    className="fullGalleryOverlay"
-    onTouchStart={dokunmaBasla}
-    onTouchEnd={dokunmaBitir}
-  >
-    <div className="fullGalleryTop">
-      <button onClick={() => setFullGallery(false)}>
-        ✕ Kapat
-      </button>
 
-      <span>
-        {aktifFoto + 1} / {fotolar.length || 1}
-      </span>
-
-      <button onClick={() => setZoomed((v) => !v)}>
-        {zoomed ? "Uzaklaştır" : "Yakınlaştır"}
-      </button>
-    </div>
-
-    <button className="fullArrow left" onClick={oncekiFoto}>
-      ‹
-    </button>
-
-    <img
-      src={current}
-      alt={ilan.title}
-      className={`fullGalleryImage ${zoomed ? "zoomed" : ""}`}
-      onClick={() => setZoomed((v) => !v)}
-    />
-
-    <button className="fullArrow right" onClick={sonrakiFoto}>
-      ›
-    </button>
-
-    <div className="fullGalleryThumbs">
-      {fotolar.map((foto, index) => (
-        <button
-          key={index}
-          className={aktifFoto === index ? "active" : ""}
-          onClick={() => setAktifFoto(index)}
-        >
-          <img
-            src={foto}
-            alt={`Fotoğraf ${index + 1}`}
-          />
-        </button>
-      ))}
-    </div>
-  </div>
-)}
       <Contact />
     </div>
   );
@@ -1302,6 +1293,174 @@ function BlogPage() {
       </main>
 
       <Contact />
+    </div>
+  );
+}
+
+
+function AdminListingManager({ ilanlar, ilanDuzenle, ilanSil }) {
+  const [adminSearch, setAdminSearch] = React.useState("");
+
+  const filtered = React.useMemo(() => {
+    const q = adminSearch.trim().toLowerCase();
+
+    return [...ilanlar]
+      .filter((ilan) => {
+        if (!q) return true;
+        return [
+          ilan.title,
+          ilan.price,
+          ilan.location,
+          ilan.status,
+          ilan.type,
+          ilan.rooms,
+          ilan.area,
+        ]
+          .filter(Boolean)
+          .join(" ")
+          .toLowerCase()
+          .includes(q);
+      })
+      .sort((a, b) => Number(!!b.featured) - Number(!!a.featured));
+  }, [ilanlar, adminSearch]);
+
+  return (
+    <section className="adminListPanel">
+      <div className="adminListHead">
+        <div>
+          <p className="adminEyebrow">PORTFÖY YÖNETİMİ</p>
+          <h2>Mevcut İlanlar</h2>
+        </div>
+
+        <div className="adminSearchBox">
+          <span>🔎</span>
+          <input
+            value={adminSearch}
+            onChange={(e) => setAdminSearch(e.target.value)}
+            placeholder="İlan ara..."
+          />
+        </div>
+      </div>
+
+      {filtered.length === 0 ? (
+        <div className="emptyState">Admin panelde gösterilecek ilan bulunamadı.</div>
+      ) : (
+        <div className="adminListingGrid">
+          {filtered.map((ilan) => (
+            <article className="adminListingCard" key={ilan.id}>
+              <div className="adminListingImage">
+                <img src={ilkFoto(ilan)} alt={ilan.title} />
+                {ilan.featured && <span>⭐ Öne Çıkan</span>}
+              </div>
+
+              <div className="adminListingInfo">
+                <div className="adminListingBadges">
+                  <b>{ilan.status || "Satılık"}</b>
+                  {ilan.type && <b>{ilan.type}</b>}
+                </div>
+
+                <h3>{ilan.title}</h3>
+                <p>{ilan.location}</p>
+                <strong>{ilan.price}</strong>
+
+                <div className="adminListingMeta">
+                  {ilan.rooms && <span>{ilan.rooms}</span>}
+                  {ilan.area && <span>{ilan.area} m²</span>}
+                </div>
+              </div>
+
+              <div className="adminListingActions">
+                <button
+                  className="adminEditBtn"
+                  onClick={() => ilanDuzenle(ilan)}
+                >
+                  Düzenle
+                </button>
+                <button
+                  className="adminDeleteBtn"
+                  onClick={() => ilanSil(ilan.id)}
+                >
+                  Sil
+                </button>
+              </div>
+            </article>
+          ))}
+        </div>
+      )}
+    </section>
+  );
+}
+
+function AdminPage({
+  admin,
+  setAdmin,
+  sifre,
+  setSifre,
+  girisYap,
+  form,
+  setForm,
+  duzenlenenId,
+  ilanKaydet,
+  setDuzenlenenId,
+  bosForm,
+  ilanlar,
+  ilanDuzenle,
+  ilanSil,
+}) {
+  return (
+    <div className="page adminRoutePage">
+      <Header detail />
+
+      <main className="adminRouteWrap">
+        {!admin ? (
+          <section className="adminGate">
+            <div className="adminGateCard">
+              <img src={logo} alt="Han Gayrimenkul" />
+              <p>Gizli Yönetim Paneli</p>
+              <h2>Han Gayrimenkul Yönetim</h2>
+              <span>Bu alan yalnızca yetkili kullanım içindir.</span>
+
+              <div className="adminGateLogin">
+                <input
+                  type="password"
+                  placeholder="Admin şifre"
+                  value={sifre}
+                  onChange={(e) => setSifre(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && girisYap()}
+                />
+                <button onClick={girisYap}>Giriş Yap</button>
+              </div>
+            </div>
+          </section>
+        ) : (
+          <>
+            <div className="adminRouteTop">
+              <div>
+                <p className="adminEyebrow">GİZLİ PANEL</p>
+                <h1>İlan Yönetimi</h1>
+              </div>
+              <button className="navPill" onClick={() => setAdmin(false)}>
+                Çıkış Yap
+              </button>
+            </div>
+
+            <AdminPanel
+              form={form}
+              setForm={setForm}
+              duzenlenenId={duzenlenenId}
+              ilanKaydet={ilanKaydet}
+              setDuzenlenenId={setDuzenlenenId}
+              bosForm={bosForm}
+            />
+
+            <AdminListingManager
+              ilanlar={ilanlar}
+              ilanDuzenle={ilanDuzenle}
+              ilanSil={ilanSil}
+            />
+          </>
+        )}
+      </main>
     </div>
   );
 }
@@ -1522,6 +1681,27 @@ function App() {
           }
         />
         <Route path="/rehber/:slug" element={<BlogPage />} />
+        <Route
+          path="/admin"
+          element={
+            <AdminPage
+              admin={admin}
+              setAdmin={setAdmin}
+              sifre={sifre}
+              setSifre={setSifre}
+              girisYap={girisYap}
+              form={form}
+              setForm={setForm}
+              duzenlenenId={duzenlenenId}
+              ilanKaydet={ilanKaydet}
+              setDuzenlenenId={setDuzenlenenId}
+              bosForm={bosForm}
+              ilanlar={ilanlar}
+              ilanDuzenle={ilanDuzenle}
+              ilanSil={ilanSil}
+            />
+          }
+        />
       </Routes>
     </>
   );
@@ -3069,6 +3249,292 @@ function Style() {
       .footer { padding: 30px; text-align: center; color: #aaa; }
       .footer strong { color: var(--orange); }
 
+      
+      .aiTools {
+        grid-column: 1 / -1;
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        padding: 14px;
+        border-radius: 18px;
+        border: 1px solid rgba(255,138,0,.22);
+        background: rgba(255,138,0,.07);
+      }
+
+      .aiTools button {
+        min-height: 46px;
+        padding: 0 18px;
+        border-radius: 999px;
+        border: 1px solid rgba(255,138,0,.45);
+        background: rgba(0,0,0,.28);
+        color: white;
+        font-weight: 950;
+        cursor: pointer;
+      }
+
+      .aiTools button:hover {
+        background: var(--orange);
+        color: #050505;
+      }
+
+      .adminRouteWrap {
+        width: min(1180px, calc(100% - 28px));
+        margin: 30px auto 70px;
+      }
+
+      .adminRouteTop {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 18px;
+        margin-bottom: 22px;
+        padding: 24px;
+        border-radius: 26px;
+        border: 1px solid rgba(255,255,255,.12);
+        background: rgba(255,255,255,.045);
+      }
+
+      .adminRouteTop h1 {
+        margin: 0;
+        font-size: clamp(34px, 5vw, 52px);
+        letter-spacing: -1.5px;
+      }
+
+      .adminGate {
+        min-height: 70vh;
+        display: grid;
+        place-items: center;
+      }
+
+      .adminGateCard {
+        width: min(480px, 100%);
+        padding: 34px;
+        border-radius: 32px;
+        border: 1px solid rgba(255,138,0,.32);
+        background:
+          radial-gradient(circle at top left, rgba(255,138,0,.16), transparent 42%),
+          linear-gradient(180deg, rgba(255,255,255,.065), rgba(255,255,255,.028));
+        text-align: center;
+        box-shadow: 0 34px 90px rgba(0,0,0,.45);
+      }
+
+      .adminGateCard img {
+        width: 86px;
+        height: 86px;
+        object-fit: contain;
+        margin-bottom: 16px;
+      }
+
+      .adminGateCard p {
+        margin: 0;
+        color: var(--orange);
+        font-weight: 950;
+        letter-spacing: 1.5px;
+      }
+
+      .adminGateCard h2 {
+        margin: 10px 0;
+        font-size: 34px;
+      }
+
+      .adminGateCard span {
+        color: #bcbcbc;
+        display: block;
+        margin-bottom: 24px;
+      }
+
+      .adminGateLogin {
+        display: flex;
+        gap: 10px;
+      }
+
+      .adminGateLogin input {
+        flex: 1;
+        min-width: 0;
+        border: 1px solid rgba(255,255,255,.14);
+        background: rgba(255,255,255,.06);
+        color: white;
+        border-radius: 999px;
+        padding: 14px 16px;
+        outline: none;
+      }
+
+      .adminGateLogin button {
+        border-radius: 999px;
+        border: 1px solid var(--orange);
+        background: var(--orange);
+        color: #050505;
+        padding: 0 18px;
+        font-weight: 950;
+        cursor: pointer;
+      }
+
+      
+      .adminListPanel {
+        margin-top: 28px;
+        padding: 24px;
+        border-radius: 28px;
+        border: 1px solid rgba(255,255,255,.12);
+        background:
+          radial-gradient(circle at top right, rgba(255,138,0,.10), transparent 36%),
+          rgba(255,255,255,.035);
+      }
+
+      .adminListHead {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 18px;
+        margin-bottom: 20px;
+      }
+
+      .adminListHead h2 {
+        margin: 0;
+        font-size: clamp(28px, 4vw, 42px);
+        letter-spacing: -1px;
+      }
+
+      .adminSearchBox {
+        min-width: min(360px, 100%);
+        min-height: 50px;
+        padding: 0 14px;
+        border-radius: 999px;
+        border: 1px solid rgba(255,255,255,.14);
+        background: rgba(0,0,0,.22);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .adminSearchBox input {
+        flex: 1;
+        min-width: 0;
+        border: 0;
+        outline: 0;
+        background: transparent;
+        color: white;
+        font-weight: 800;
+      }
+
+      .adminListingGrid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(290px, 1fr));
+        gap: 16px;
+      }
+
+      .adminListingCard {
+        overflow: hidden;
+        border-radius: 22px;
+        border: 1px solid rgba(255,255,255,.12);
+        background: rgba(0,0,0,.22);
+        display: grid;
+        grid-template-rows: 180px 1fr auto;
+      }
+
+      .adminListingImage {
+        position: relative;
+        background: #000;
+        overflow: hidden;
+      }
+
+      .adminListingImage img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+      }
+
+      .adminListingImage span {
+        position: absolute;
+        left: 12px;
+        top: 12px;
+        padding: 8px 12px;
+        border-radius: 999px;
+        background: rgba(255,138,0,.18);
+        border: 1px solid rgba(255,138,0,.52);
+        color: white;
+        font-weight: 950;
+        backdrop-filter: blur(10px);
+      }
+
+      .adminListingInfo {
+        padding: 16px;
+      }
+
+      .adminListingBadges {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+
+      .adminListingBadges b {
+        padding: 7px 10px;
+        border-radius: 999px;
+        background: rgba(255,138,0,.10);
+        border: 1px solid rgba(255,138,0,.28);
+        color: var(--orange);
+        font-size: 12px;
+      }
+
+      .adminListingInfo h3 {
+        margin: 12px 0 6px;
+        font-size: 20px;
+        line-height: 1.2;
+      }
+
+      .adminListingInfo p {
+        margin: 0 0 8px;
+        color: #aaa;
+      }
+
+      .adminListingInfo strong {
+        display: block;
+        color: var(--orange);
+        font-size: 22px;
+        margin-bottom: 10px;
+      }
+
+      .adminListingMeta {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+
+      .adminListingMeta span {
+        padding: 7px 10px;
+        border-radius: 10px;
+        background: rgba(255,255,255,.06);
+        color: #ddd;
+        font-size: 12px;
+        font-weight: 850;
+      }
+
+      .adminListingActions {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+        padding: 0 16px 16px;
+      }
+
+      .adminEditBtn,
+      .adminDeleteBtn {
+        min-height: 46px;
+        border-radius: 14px;
+        border: 0;
+        color: white;
+        font-weight: 950;
+        cursor: pointer;
+      }
+
+      .adminEditBtn {
+        background: rgba(255,138,0,.88);
+        color: #050505;
+      }
+
+      .adminDeleteBtn {
+        background: rgba(176,0,32,.82);
+      }
+
       @media (max-width: 980px) {
         .desktopNav { display: none; }
         .statsGrid { grid-template-columns: repeat(2, 1fr); }
@@ -3078,6 +3544,55 @@ function Style() {
       }
 
       @media (max-width: 768px) {
+
+        .aiTools {
+          flex-direction: column;
+        }
+
+        .aiTools button {
+          width: 100%;
+        }
+
+        .adminRouteTop {
+          align-items: stretch;
+          flex-direction: column;
+          padding: 20px;
+        }
+
+        .adminGateCard {
+          padding: 26px 18px;
+        }
+
+        .adminGateLogin {
+          flex-direction: column;
+        }
+
+        .adminGateLogin button {
+          min-height: 48px;
+        }
+
+
+        .adminListPanel {
+          padding: 16px;
+        }
+
+        .adminListHead {
+          align-items: stretch;
+          flex-direction: column;
+        }
+
+        .adminSearchBox {
+          width: 100%;
+        }
+
+        .adminListingGrid {
+          grid-template-columns: 1fr;
+        }
+
+        .adminListingCard {
+          grid-template-rows: 210px 1fr auto;
+        }
+
         .siteHeader {
           min-height: 74px;
           padding: 12px 14px;
