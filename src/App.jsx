@@ -1,5 +1,20 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Link, Route, Routes, useNavigate, useParams } from "react-router-dom";
+import {
+  DndContext,
+  PointerSensor,
+  TouchSensor,
+  useSensor,
+  useSensors,
+  closestCenter,
+} from "@dnd-kit/core";
+import {
+  SortableContext,
+  arrayMove,
+  rectSortingStrategy,
+  useSortable,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 import logo from "./assets/logo.png";
 import heroVideo from "./assets/villa.mp4";
 import { db } from "./firebase";
@@ -29,6 +44,12 @@ const CONTACTS = {
   tiktok: "https://www.tiktok.com/@han_gayrimenkul",
   facebook: "https://www.facebook.com/hangayrimenkulkarasu",
 };
+
+const SITE_URL = "https://www.hangayrimenkulkarasu.com";
+const SITE_NAME = "Han Gayrimenkul";
+const DEFAULT_SEO_IMAGE =
+  "https://res.cloudinary.com/depa6zrzr/image/upload/q_auto/f_auto/v1778290369/WhatsApp_Image_2026-05-07_at_22.15.14_16_dyfcxk.jpg";
+
 
 const PROPERTY_TYPES = [
   "Tümü",
@@ -66,6 +87,55 @@ function TurkishFlag() {
       </svg>
     </div>
   );
+}
+
+function SEO({ title, description, image, url, type = "website" }) {
+  React.useEffect(() => {
+    const safeTitle = title || "Han Gayrimenkul | Sakarya Karasu Premium Gayrimenkul";
+    const safeDescription =
+      description ||
+      "Han Gayrimenkul ile Sakarya Karasu bölgesindeki satılık ve kiralık premium gayrimenkul fırsatlarını keşfedin.";
+    const safeImage = image || DEFAULT_SEO_IMAGE;
+    const safeUrl = url || SITE_URL;
+
+    document.title = safeTitle;
+
+    const setMeta = (selector, attrName, attrValue, content) => {
+      let tag = document.head.querySelector(selector);
+      if (!tag) {
+        tag = document.createElement("meta");
+        tag.setAttribute(attrName, attrValue);
+        document.head.appendChild(tag);
+      }
+      tag.setAttribute("content", content);
+    };
+
+    setMeta('meta[name="description"]', "name", "description", safeDescription);
+    setMeta('meta[name="robots"]', "name", "robots", "index, follow");
+
+    setMeta('meta[property="og:title"]', "property", "og:title", safeTitle);
+    setMeta('meta[property="og:description"]', "property", "og:description", safeDescription);
+    setMeta('meta[property="og:image"]', "property", "og:image", safeImage);
+    setMeta('meta[property="og:url"]', "property", "og:url", safeUrl);
+    setMeta('meta[property="og:type"]', "property", "og:type", type);
+    setMeta('meta[property="og:site_name"]', "property", "og:site_name", SITE_NAME);
+    setMeta('meta[property="og:locale"]', "property", "og:locale", "tr_TR");
+
+    setMeta('meta[name="twitter:card"]', "name", "twitter:card", "summary_large_image");
+    setMeta('meta[name="twitter:title"]', "name", "twitter:title", safeTitle);
+    setMeta('meta[name="twitter:description"]', "name", "twitter:description", safeDescription);
+    setMeta('meta[name="twitter:image"]', "name", "twitter:image", safeImage);
+
+    let canonical = document.head.querySelector('link[rel="canonical"]');
+    if (!canonical) {
+      canonical = document.createElement("link");
+      canonical.setAttribute("rel", "canonical");
+      document.head.appendChild(canonical);
+    }
+    canonical.setAttribute("href", safeUrl);
+  }, [title, description, image, url, type]);
+
+  return null;
 }
 
 function slugify(text = "") {
@@ -230,6 +300,72 @@ function AdminLogin({ sifre, setSifre, girisYap }) {
   );
 }
 
+
+function SortablePhotoItem({
+  url,
+  index,
+  coverIndex,
+  setCover,
+  removePhoto,
+}) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: url });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    zIndex: isDragging ? 30 : "auto",
+    opacity: isDragging ? 0.75 : 1,
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={`photoManageItem sortablePhoto ${coverIndex === index ? "cover" : ""}`}
+      {...attributes}
+      {...listeners}
+    >
+      <img src={url} alt={`İlan fotoğrafı ${index + 1}`} />
+
+      <div className="dragHint">Sürükle</div>
+
+      <div className="photoManageOverlay">
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            setCover(index);
+          }}
+          onPointerDown={(e) => e.stopPropagation()}
+          onTouchStart={(e) => e.stopPropagation()}
+        >
+          {coverIndex === index ? "Kapak ✓" : "Kapak Yap"}
+        </button>
+
+        <button
+          type="button"
+          className="removePhoto"
+          onClick={(e) => {
+            e.stopPropagation();
+            removePhoto(index);
+          }}
+          onPointerDown={(e) => e.stopPropagation()}
+          onTouchStart={(e) => e.stopPropagation()}
+        >
+          Sil
+        </button>
+      </div>
+    </div>
+  );
+}
+
 function AdminPanel({
   form,
   setForm,
@@ -241,6 +377,15 @@ function AdminPanel({
   const [uploading, setUploading] = React.useState(false);
   const [uploadProgress, setUploadProgress] = React.useState("");
   const [dragActive, setDragActive] = React.useState(false);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: { distance: 8 },
+    }),
+    useSensor(TouchSensor, {
+      activationConstraint: { delay: 160, tolerance: 8 },
+    })
+  );
 
   const photos = React.useMemo(() => fotoListesi(form), [form.image]);
   const coverIndex = Math.min(Number(form.coverIndex || 0), Math.max(photos.length - 1, 0));
@@ -324,12 +469,22 @@ function AdminPanel({
     updatePhotos(next, nextCover);
   };
 
-  const movePhoto = (index, direction) => {
-    const nextIndex = index + direction;
-    const next = moveArrayItem(photos, index, nextIndex);
+  const handlePhotoDragEnd = (event) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+
+    const oldIndex = photos.indexOf(active.id);
+    const newIndex = photos.indexOf(over.id);
+
+    if (oldIndex === -1 || newIndex === -1) return;
+
+    const next = arrayMove(photos, oldIndex, newIndex);
+
     let nextCover = coverIndex;
-    if (coverIndex === index) nextCover = nextIndex;
-    else if (coverIndex === nextIndex) nextCover = index;
+    if (coverIndex === oldIndex) nextCover = newIndex;
+    else if (oldIndex < coverIndex && newIndex >= coverIndex) nextCover = coverIndex - 1;
+    else if (oldIndex > coverIndex && newIndex <= coverIndex) nextCover = coverIndex + 1;
+
     updatePhotos(next, nextCover);
   };
 
@@ -409,23 +564,26 @@ function AdminPanel({
               <span>Kapak fotoğrafı ve sıralamayı buradan düzenle.</span>
             </div>
 
-            <div className="photoManageGrid">
-              {photos.map((url, index) => (
-                <div className={`photoManageItem ${coverIndex === index ? "cover" : ""}`} key={`${url}-${index}`}>
-                  <img src={url} alt={`İlan fotoğrafı ${index + 1}`} />
-                  <div className="photoManageOverlay">
-                    <button type="button" onClick={() => setForm({ ...form, coverIndex: index })}>
-                      {coverIndex === index ? "Kapak ✓" : "Kapak Yap"}
-                    </button>
-                    <div className="photoMoveBtns">
-                      <button type="button" disabled={index === 0} onClick={() => movePhoto(index, -1)}>←</button>
-                      <button type="button" disabled={index === photos.length - 1} onClick={() => movePhoto(index, 1)}>→</button>
-                      <button type="button" className="removePhoto" onClick={() => removePhoto(index)}>Sil</button>
-                    </div>
-                  </div>
+            <DndContext
+              sensors={sensors}
+              collisionDetection={closestCenter}
+              onDragEnd={handlePhotoDragEnd}
+            >
+              <SortableContext items={photos} strategy={rectSortingStrategy}>
+                <div className="photoManageGrid">
+                  {photos.map((url, index) => (
+                    <SortablePhotoItem
+                      key={url}
+                      url={url}
+                      index={index}
+                      coverIndex={coverIndex}
+                      setCover={(photoIndex) => setForm({ ...form, coverIndex: photoIndex })}
+                      removePhoto={removePhoto}
+                    />
+                  ))}
                 </div>
-              ))}
-            </div>
+              </SortableContext>
+            </DndContext>
           </div>
         )}
 
@@ -573,6 +731,12 @@ function Home({
 
   return (
     <div className="page">
+      <SEO
+        title="Han Gayrimenkul | Sakarya Karasu Satılık ve Kiralık Gayrimenkul"
+        description="Sakarya Karasu’da satılık, kiralık, arsa, villa, daire ve yatırım odaklı gayrimenkul portföyleri. Han Gayrimenkul ile güvenilir emlak danışmanlığı."
+        image={DEFAULT_SEO_IMAGE}
+        url={SITE_URL}
+      />
       <section className="hero">
         <video className="heroVideo" autoPlay muted loop playsInline>
           <source src={heroVideo} type="video/mp4" />
@@ -760,8 +924,49 @@ function ListingDetail({ ilanlar, favorites, toggleFavorite }) {
     touchStartX.current = null;
   };
 
+  const detailUrl = `${SITE_URL}/ilan/${ilanSlug(ilan)}`;
+  const seoTitle = `${ilan.title} | ${ilan.location || "Karasu"} | Han Gayrimenkul`;
+  const seoDescription = `${ilan.price || ""} ${ilan.status || ""} ${ilan.type || "gayrimenkul"} - ${ilan.location || "Sakarya Karasu"}. Detaylı bilgi ve randevu için Han Gayrimenkul ile iletişime geçin.`;
+  const structuredData = {
+    "@context": "https://schema.org",
+    "@type": "RealEstateListing",
+    name: ilan.title,
+    description: ilan.description || seoDescription,
+    url: detailUrl,
+    image: fotolar,
+    address: {
+      "@type": "PostalAddress",
+      addressLocality: "Karasu",
+      addressRegion: "Sakarya",
+      addressCountry: "TR",
+    },
+    offers: {
+      "@type": "Offer",
+      priceCurrency: "TRY",
+      price: String(ilan.price || "").replace(/[^0-9]/g, ""),
+      availability: "https://schema.org/InStock",
+    },
+    seller: {
+      "@type": "RealEstateAgent",
+      name: "Han Gayrimenkul",
+      telephone: CONTACTS.officePhone,
+      email: CONTACTS.email,
+      url: SITE_URL,
+    },
+  };
+
   return (
     <div className="page detailPage">
+      <SEO
+        title={seoTitle}
+        description={seoDescription}
+        image={current || DEFAULT_SEO_IMAGE}
+        url={detailUrl}
+        type="article"
+      />
+      <script type="application/ld+json">
+        {JSON.stringify(structuredData)}
+      </script>
       <Header detail />
 
       <div className="mobileDetailBack">
@@ -1492,14 +1697,6 @@ function Style() {
       .hint { color: #aaa; margin: 0; font-size: 13px; }
       .addBtn { margin-top: 18px; background: var(--orange); color: #050505; }
       .cancelBtn { margin-top: 18px; margin-left: 10px; background: transparent; }
-      select.input {
-  color: white;
-}
-
-select.input option {
-  background: #151515;
-  color: white;
-}
 
       .listings {
         max-width: 1260px;
@@ -1695,6 +1892,32 @@ select.input option {
         background: #000;
       }
 
+      .sortablePhoto {
+        cursor: grab;
+        touch-action: none;
+        user-select: none;
+      }
+
+      .sortablePhoto:active {
+        cursor: grabbing;
+      }
+
+      .dragHint {
+        position: absolute;
+        left: 8px;
+        bottom: 8px;
+        z-index: 4;
+        padding: 6px 9px;
+        border-radius: 999px;
+        background: rgba(0,0,0,.58);
+        color: rgba(255,255,255,.86);
+        font-size: 11px;
+        font-weight: 900;
+        border: 1px solid rgba(255,255,255,.16);
+        backdrop-filter: blur(8px);
+        pointer-events: none;
+      }
+
       .photoManageItem.cover {
         border-color: var(--orange);
         box-shadow: 0 0 25px rgba(255,138,0,.16);
@@ -1712,11 +1935,13 @@ select.input option {
         inset: 0;
         padding: 8px;
         display: flex;
-        flex-direction: column;
+        align-items: flex-start;
         justify-content: space-between;
+        gap: 8px;
         background: linear-gradient(to bottom, rgba(0,0,0,.28), rgba(0,0,0,.78));
         opacity: 0;
         transition: .2s ease;
+        pointer-events: none;
       }
 
       .photoManageItem:hover .photoManageOverlay,
@@ -1733,6 +1958,7 @@ select.input option {
         font-weight: 900;
         cursor: pointer;
         backdrop-filter: blur(10px);
+        pointer-events: auto;
       }
 
       .photoMoveBtns {
