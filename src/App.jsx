@@ -1738,14 +1738,14 @@ function Contact() {
 
         <div className="contactItem">
           <div className="contactIcon">👤</div>
-          <p className="contactName">{CONTACTS.mustafaName}</p>
-          <p className="contactPhone">{CONTACTS.mustafaPhone}</p>
+          <p className="contactName">{CONTACTS.muzafferName}</p>          
+          <p className="contactPhone">{CONTACTS.muzafferPhone}</p>
         </div>
 
         <div className="contactItem">
           <div className="contactIcon">👤</div>
-          <p className="contactName">{CONTACTS.muzafferName}</p>
-          <p className="contactPhone">{CONTACTS.muzafferPhone}</p>
+          <p className="contactName">{CONTACTS.mustafaName}</p>
+          <p className="contactPhone">{CONTACTS.mustafaPhone}</p>
         </div>
 
         <div className="contactItem">
