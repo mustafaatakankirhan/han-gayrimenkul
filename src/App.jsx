@@ -941,42 +941,8 @@ function Home({
         </div>
       </section>
 
-      {fullGallery && (
-        <div
-          className="fullGalleryOverlay"
-          onTouchStart={dokunmaBasla}
-          onTouchEnd={dokunmaBitir}
-        >
-          <div className="fullGalleryTop">
-            <button onClick={() => setFullGallery(false)}>✕ Kapat</button>
-            <span>{aktifFoto + 1} / {fotolar.length || 1}</span>
-            <button onClick={() => setZoomed((v) => !v)}>
-              {zoomed ? "Uzaklaştır" : "Yakınlaştır"}
-            </button>
-          </div>
-
-          <button className="fullArrow left" onClick={oncekiFoto}>‹</button>
-          <img
-            src={current}
-            alt={ilan.title}
-            className={`fullGalleryImage ${zoomed ? "zoomed" : ""}`}
-            onClick={() => setZoomed((v) => !v)}
-          />
-          <button className="fullArrow right" onClick={sonrakiFoto}>›</button>
-
-          <div className="fullGalleryThumbs">
-            {fotolar.map((foto, index) => (
-              <button
-                key={index}
-                className={aktifFoto === index ? "active" : ""}
-                onClick={() => setAktifFoto(index)}
-              >
-                <img src={foto} alt={`Fotoğraf ${index + 1}`} />
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
+      
+    
 
       <Contact />
     </div>
@@ -1226,7 +1192,57 @@ function ListingDetail({ ilanlar, favorites, toggleFavorite }) {
           </div>
         </section>
       </main>
+{fullGallery && (
+  <div
+    className="fullGalleryOverlay"
+    onTouchStart={dokunmaBasla}
+    onTouchEnd={dokunmaBitir}
+  >
+    <div className="fullGalleryTop">
+      <button onClick={() => setFullGallery(false)}>
+        ✕ Kapat
+      </button>
 
+      <span>
+        {aktifFoto + 1} / {fotolar.length || 1}
+      </span>
+
+      <button onClick={() => setZoomed((v) => !v)}>
+        {zoomed ? "Uzaklaştır" : "Yakınlaştır"}
+      </button>
+    </div>
+
+    <button className="fullArrow left" onClick={oncekiFoto}>
+      ‹
+    </button>
+
+    <img
+      src={current}
+      alt={ilan.title}
+      className={`fullGalleryImage ${zoomed ? "zoomed" : ""}`}
+      onClick={() => setZoomed((v) => !v)}
+    />
+
+    <button className="fullArrow right" onClick={sonrakiFoto}>
+      ›
+    </button>
+
+    <div className="fullGalleryThumbs">
+      {fotolar.map((foto, index) => (
+        <button
+          key={index}
+          className={aktifFoto === index ? "active" : ""}
+          onClick={() => setAktifFoto(index)}
+        >
+          <img
+            src={foto}
+            alt={`Fotoğraf ${index + 1}`}
+          />
+        </button>
+      ))}
+    </div>
+  </div>
+)}
       <Contact />
     </div>
   );
