@@ -61,6 +61,37 @@ const PROPERTY_TYPES = [
   "Bahçe",
 ];
 
+const BLOG_POSTS = [
+  {
+    slug: "karasuda-yatirim-yapilir-mi",
+    title: "Karasu’da yatırım yapılır mı?",
+    category: "Yatırım",
+    excerpt:
+      "Karasu’da gayrimenkul yatırımı yaparken konum, sahil mesafesi, imar durumu ve gelişim aksı neden önemlidir?",
+    content:
+      "Karasu, yazlık talebi, sahil hattı, ulaşım bağlantıları ve gelişen yerleşim alanlarıyla yatırım açısından dikkat çeken bölgelerden biridir. Doğru portföy seçiminde denize mesafe, bölgenin gelişim yönü, imar durumu, yapı kalitesi ve kira potansiyeli birlikte değerlendirilmelidir. Han Gayrimenkul olarak portföyleri sadece fiyatıyla değil, uzun vadeli değer potansiyeliyle ele alıyoruz.",
+  },
+  {
+    slug: "karasu-satilik-arsa-rehberi",
+    title: "Karasu satılık arsa rehberi",
+    category: "Arsa",
+    excerpt:
+      "Arsa alırken yol cephesi, imar durumu, bölgesel gelişim ve tapu kontrolü en kritik başlıklardır.",
+    content:
+      "Karasu’da arsa yatırımı yaparken yalnızca fiyat karşılaştırması yapmak yeterli değildir. İmar durumu, yola cephe, altyapı, çevredeki yapılaşma, hisseli/tam tapu durumu ve bölgenin gelişim yönü dikkatle incelenmelidir. Doğru analiz yapılmadan alınan arsa uzun vadede beklenen getiriyi sağlamayabilir.",
+  },
+  {
+    slug: "yazlik-alirken-dikkat-edilecekler",
+    title: "Yazlık alırken nelere dikkat edilmeli?",
+    category: "Konut",
+    excerpt:
+      "Yazlık alırken sadece manzara değil; bina kalitesi, ulaşım, aidat, kira potansiyeli ve konum da önemlidir.",
+    content:
+      "Yazlık alımında en sık yapılan hata sadece dış görünüşe veya denize yakınlığa bakmaktır. Oysa bina yaşı, deprem yönetmeliği, site düzeni, aidat, otopark, ulaşım kolaylığı ve sezon dışı kullanım imkânı da değerlendirilmelidir. Doğru yazlık hem yaşam konforu hem de yatırım getirisi sağlar.",
+  },
+];
+
+
 const ICONS = {
   whatsapp: "https://img.icons8.com/color/48/whatsapp--v1.png",
   instagram: "https://img.icons8.com/fluency/48/instagram-new.png",
@@ -257,6 +288,7 @@ function Header({ detail = false, admin, setAdmin, setAdminOpen }) {
         <nav className="desktopNav">
           <a href="#ilanlar">İlanlar</a>
           <a href="#yatirim">Yatırım Rehberi</a>
+          <a href="#blog">Rehber</a>
           <a href="#contact">İletişim</a>
         </nav>
       )}
@@ -717,17 +749,38 @@ function Home({
   const [filtre, setFiltre] = useState("Tümü");
   const [tur, setTur] = useState("Tümü");
   const [onlyFavorites, setOnlyFavorites] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
 
   const gorunenIlanlar = useMemo(() => {
+    const q = searchTerm.trim().toLowerCase();
+
     return ilanlar
       .filter((ilan) => {
         const statusOk = filtre === "Tümü" || ilan.status === filtre;
         const typeOk = tur === "Tümü" || ilan.type === tur;
         const favOk = !onlyFavorites || favorites.includes(ilan.id);
-        return statusOk && typeOk && favOk;
+
+        const searchable = [
+          ilan.title,
+          ilan.price,
+          ilan.location,
+          ilan.rooms,
+          ilan.area,
+          ilan.status,
+          ilan.type,
+          ilan.description,
+          ilan.investmentNote,
+        ]
+          .filter(Boolean)
+          .join(" ")
+          .toLowerCase();
+
+        const searchOk = !q || searchable.includes(q);
+
+        return statusOk && typeOk && favOk && searchOk;
       })
       .sort((a, b) => Number(!!b.featured) - Number(!!a.featured));
-  }, [ilanlar, filtre, tur, onlyFavorites, favorites]);
+  }, [ilanlar, filtre, tur, onlyFavorites, favorites, searchTerm]);
 
   return (
     <div className="page">
@@ -787,6 +840,18 @@ function Home({
       <section id="ilanlar" className="listings">
         <p className="sectionLabel">PORTFÖYLERİMİZ</p>
         <h2 className="sectionTitle">Güncel İlanlar</h2>
+
+        <div className="smartSearchBox">
+          <span>🔎</span>
+          <input
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            placeholder="Daire, villa, arsa, 2+1, denize yakın..."
+          />
+          {searchTerm && (
+            <button onClick={() => setSearchTerm("")}>Temizle</button>
+          )}
+        </div>
 
         <div className="filters">
           {["Tümü", "Satılık", "Kiralık"].map((x) => (
@@ -860,6 +925,59 @@ function Home({
         </div>
       </section>
 
+      <section id="blog" className="blogSection">
+        <p className="sectionLabel">KARASU REHBERİ</p>
+        <h2 className="sectionTitle">Yatırım ve Gayrimenkul Rehberi</h2>
+
+        <div className="blogGrid">
+          {BLOG_POSTS.map((post) => (
+            <Link to={`/rehber/${post.slug}`} className="blogCard" key={post.slug}>
+              <span>{post.category}</span>
+              <h3>{post.title}</h3>
+              <p>{post.excerpt}</p>
+              <strong>Devamını Oku →</strong>
+            </Link>
+          ))}
+        </div>
+      </section>
+
+      {fullGallery && (
+        <div
+          className="fullGalleryOverlay"
+          onTouchStart={dokunmaBasla}
+          onTouchEnd={dokunmaBitir}
+        >
+          <div className="fullGalleryTop">
+            <button onClick={() => setFullGallery(false)}>✕ Kapat</button>
+            <span>{aktifFoto + 1} / {fotolar.length || 1}</span>
+            <button onClick={() => setZoomed((v) => !v)}>
+              {zoomed ? "Uzaklaştır" : "Yakınlaştır"}
+            </button>
+          </div>
+
+          <button className="fullArrow left" onClick={oncekiFoto}>‹</button>
+          <img
+            src={current}
+            alt={ilan.title}
+            className={`fullGalleryImage ${zoomed ? "zoomed" : ""}`}
+            onClick={() => setZoomed((v) => !v)}
+          />
+          <button className="fullArrow right" onClick={sonrakiFoto}>›</button>
+
+          <div className="fullGalleryThumbs">
+            {fotolar.map((foto, index) => (
+              <button
+                key={index}
+                className={aktifFoto === index ? "active" : ""}
+                onClick={() => setAktifFoto(index)}
+              >
+                <img src={foto} alt={`Fotoğraf ${index + 1}`} />
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
       <Contact />
     </div>
   );
@@ -869,6 +987,8 @@ function ListingDetail({ ilanlar, favorites, toggleFavorite }) {
   const { slug } = useParams();
   const navigate = useNavigate();
   const [aktifFoto, setAktifFoto] = useState(0);
+  const [fullGallery, setFullGallery] = useState(false);
+  const [zoomed, setZoomed] = useState(false);
   const touchStartX = React.useRef(null);
 
   const ilan = useMemo(() => {
@@ -878,8 +998,13 @@ function ListingDetail({ ilanlar, favorites, toggleFavorite }) {
 
   useEffect(() => {
     setAktifFoto(0);
+    setZoomed(false);
     window.scrollTo(0, 0);
   }, [slug]);
+
+  useEffect(() => {
+    setZoomed(false);
+  }, [aktifFoto]);
 
   const goListings = () => {
     navigate("/#ilanlar");
@@ -976,7 +1101,16 @@ function ListingDetail({ ilanlar, favorites, toggleFavorite }) {
       <main className="detailWrap">
         <section className="detailGallery">
           <div className="detailImageFrame" onTouchStart={dokunmaBasla} onTouchEnd={dokunmaBitir}>
-            <img src={current} alt={ilan.title} className="detailMainImage" />
+            <img
+              src={current}
+              alt={ilan.title}
+              className="detailMainImage"
+              onClick={() => setFullGallery(true)}
+            />
+
+            <button className="fullscreenBtn" onClick={() => setFullGallery(true)}>
+              ⛶ Tam ekran
+            </button>
 
             {fotolar.length > 1 && (
               <>
@@ -1091,6 +1225,64 @@ function ListingDetail({ ilanlar, favorites, toggleFavorite }) {
             )}
           </div>
         </section>
+      </main>
+
+      <Contact />
+    </div>
+  );
+}
+
+function BlogPage() {
+  const { slug } = useParams();
+  const post = BLOG_POSTS.find((item) => item.slug === slug);
+
+  if (!post) {
+    return (
+      <div className="page detailPage">
+        <Header detail />
+        <div className="notFound">
+          <h2>Rehber yazısı bulunamadı</h2>
+          <Link className="heroBtn" to="/#blog">Rehbere Dön</Link>
+        </div>
+      </div>
+    );
+  }
+
+  const blogUrl = `${SITE_URL}/rehber/${post.slug}`;
+  const blogDescription = post.excerpt;
+
+  return (
+    <div className="page detailPage">
+      <SEO
+        title={`${post.title} | Han Gayrimenkul Karasu Rehberi`}
+        description={blogDescription}
+        image={DEFAULT_SEO_IMAGE}
+        url={blogUrl}
+        type="article"
+      />
+
+      <Header detail />
+
+      <main className="blogDetail">
+        <Link className="backToListingsBtn" to="/#blog">← Rehbere Dön</Link>
+        <span className="blogDetailCategory">{post.category}</span>
+        <h1>{post.title}</h1>
+        <p className="blogLead">{post.excerpt}</p>
+
+        <article>
+          <p>{post.content}</p>
+          <h2>Han Gayrimenkul ile doğru portföy seçimi</h2>
+          <p>
+            Gayrimenkul alımında doğru bilgi, doğru konum ve doğru fiyat analizi önemlidir.
+            Karasu bölgesindeki portföyler hakkında detaylı bilgi almak için bizimle iletişime geçebilirsiniz.
+          </p>
+        </article>
+
+        <div className="blogCta">
+          <h3>Karasu’da portföy mü arıyorsunuz?</h3>
+          <p>Satılık, kiralık ve yatırım odaklı ilanlarımızı inceleyin.</p>
+          <Link to="/#ilanlar" className="heroBtn">İlanları İncele</Link>
+        </div>
       </main>
 
       <Contact />
@@ -1313,6 +1505,7 @@ function App() {
             />
           }
         />
+        <Route path="/rehber/:slug" element={<BlogPage />} />
       </Routes>
     </>
   );
@@ -2177,6 +2370,284 @@ function Style() {
         color: #bbb;
       }
 
+      .smartSearchBox {
+        max-width: 760px;
+        margin: 0 auto 18px;
+        min-height: 62px;
+        border-radius: 999px;
+        border: 1px solid rgba(255,138,0,.32);
+        background: rgba(255,255,255,.055);
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 0 18px;
+        box-shadow: 0 22px 70px rgba(0,0,0,.28);
+        backdrop-filter: blur(16px);
+      }
+
+      .smartSearchBox span {
+        font-size: 22px;
+      }
+
+      .smartSearchBox input {
+        flex: 1;
+        border: 0;
+        outline: 0;
+        background: transparent;
+        color: white;
+        font-size: 17px;
+        font-weight: 750;
+      }
+
+      .smartSearchBox input::placeholder {
+        color: rgba(255,255,255,.48);
+      }
+
+      .smartSearchBox button {
+        border: 1px solid rgba(255,255,255,.14);
+        background: rgba(0,0,0,.34);
+        color: var(--orange);
+        border-radius: 999px;
+        padding: 10px 13px;
+        font-weight: 900;
+        cursor: pointer;
+      }
+
+      .blogSection {
+        max-width: 1180px;
+        margin: 0 auto;
+        padding: 42px 7% 74px;
+      }
+
+      .blogGrid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 18px;
+      }
+
+      .blogCard {
+        min-height: 260px;
+        padding: 26px;
+        border-radius: 28px;
+        border: 1px solid rgba(255,255,255,.12);
+        background:
+          radial-gradient(circle at top right, rgba(255,138,0,.12), transparent 42%),
+          rgba(255,255,255,.045);
+        text-decoration: none;
+        color: white;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        transition: .25s ease;
+      }
+
+      .blogCard:hover {
+        transform: translateY(-6px);
+        border-color: rgba(255,138,0,.5);
+        box-shadow: 0 28px 75px rgba(255,138,0,.09);
+      }
+
+      .blogCard span {
+        width: fit-content;
+        padding: 8px 12px;
+        border-radius: 999px;
+        color: var(--orange);
+        background: rgba(255,138,0,.10);
+        border: 1px solid rgba(255,138,0,.32);
+        font-weight: 950;
+      }
+
+      .blogCard h3 {
+        margin: 18px 0 10px;
+        font-size: 24px;
+        line-height: 1.15;
+      }
+
+      .blogCard p {
+        margin: 0;
+        color: #cfcfcf;
+        line-height: 1.55;
+      }
+
+      .blogCard strong {
+        color: var(--orange);
+        margin-top: 18px;
+      }
+
+      .blogDetail {
+        width: min(900px, calc(100% - 36px));
+        margin: 36px auto 70px;
+        padding: 34px;
+        border-radius: 30px;
+        border: 1px solid rgba(255,255,255,.12);
+        background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.025));
+      }
+
+      .blogDetailCategory {
+        display: inline-flex;
+        margin-top: 24px;
+        color: var(--orange);
+        font-weight: 950;
+      }
+
+      .blogDetail h1 {
+        font-size: clamp(38px, 6vw, 62px);
+        line-height: 1;
+        letter-spacing: -2px;
+        margin: 18px 0;
+      }
+
+      .blogLead {
+        color: #d4d4d4;
+        font-size: 21px;
+        line-height: 1.6;
+      }
+
+      .blogDetail article {
+        margin-top: 28px;
+        color: #d0d0d0;
+        font-size: 18px;
+        line-height: 1.8;
+      }
+
+      .blogDetail article h2 {
+        color: white;
+        margin-top: 32px;
+      }
+
+      .blogCta {
+        margin-top: 34px;
+        padding: 26px;
+        border-radius: 24px;
+        background: rgba(255,138,0,.10);
+        border: 1px solid rgba(255,138,0,.34);
+      }
+
+      .fullscreenBtn {
+        position: absolute;
+        right: 16px;
+        bottom: 16px;
+        z-index: 12;
+        min-height: 44px;
+        padding: 0 16px;
+        border-radius: 999px;
+        border: 1px solid rgba(255,255,255,.18);
+        background: rgba(0,0,0,.56);
+        color: white;
+        font-weight: 950;
+        cursor: pointer;
+        backdrop-filter: blur(12px);
+      }
+
+      .fullGalleryOverlay {
+        position: fixed;
+        inset: 0;
+        z-index: 5000;
+        background: rgba(0,0,0,.96);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+      }
+
+      .fullGalleryTop {
+        position: absolute;
+        top: 18px;
+        left: 18px;
+        right: 18px;
+        z-index: 5010;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+      }
+
+      .fullGalleryTop button,
+      .fullGalleryTop span {
+        min-height: 44px;
+        padding: 0 16px;
+        border-radius: 999px;
+        border: 1px solid rgba(255,255,255,.18);
+        background: rgba(15,15,15,.62);
+        color: white;
+        font-weight: 950;
+        backdrop-filter: blur(12px);
+      }
+
+      .fullGalleryTop button {
+        cursor: pointer;
+      }
+
+      .fullGalleryImage {
+        max-width: 96vw;
+        max-height: 82vh;
+        object-fit: contain;
+        transition: transform .25s ease;
+        cursor: zoom-in;
+      }
+
+      .fullGalleryImage.zoomed {
+        transform: scale(1.7);
+        cursor: zoom-out;
+      }
+
+      .fullArrow {
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
+        z-index: 5010;
+        width: 58px;
+        height: 58px;
+        border-radius: 50%;
+        border: 1px solid rgba(255,255,255,.18);
+        background: rgba(15,15,15,.62);
+        color: white;
+        font-size: 42px;
+        cursor: pointer;
+        backdrop-filter: blur(12px);
+      }
+
+      .fullArrow.left { left: 24px; }
+      .fullArrow.right { right: 24px; }
+
+      .fullGalleryThumbs {
+        position: absolute;
+        left: 18px;
+        right: 18px;
+        bottom: 18px;
+        z-index: 5010;
+        display: flex;
+        justify-content: center;
+        gap: 8px;
+        overflow-x: auto;
+        padding: 8px;
+      }
+
+      .fullGalleryThumbs button {
+        flex: 0 0 74px;
+        width: 74px;
+        height: 54px;
+        border-radius: 12px;
+        overflow: hidden;
+        padding: 0;
+        border: 2px solid transparent;
+        opacity: .7;
+        background: transparent;
+        cursor: pointer;
+      }
+
+      .fullGalleryThumbs button.active {
+        opacity: 1;
+        border-color: var(--orange);
+      }
+
+      .fullGalleryThumbs img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+      }
+
       .guide {
         max-width: 1120px;
         margin: 0 auto;
@@ -2846,6 +3317,77 @@ function Style() {
 
         .detailSpecs {
           justify-content: flex-start;
+        }
+
+        .smartSearchBox {
+          min-height: 56px;
+          border-radius: 22px;
+          margin-bottom: 14px;
+        }
+
+        .smartSearchBox input {
+          font-size: 15px;
+        }
+
+        .blogSection {
+          padding: 34px 14px 54px;
+        }
+
+        .blogGrid {
+          grid-template-columns: 1fr;
+        }
+
+        .blogDetail {
+          width: calc(100% - 24px);
+          padding: 24px 18px;
+          border-radius: 24px;
+        }
+
+        .blogLead {
+          font-size: 18px;
+        }
+
+        .fullscreenBtn {
+          right: 12px;
+          bottom: 12px;
+          min-height: 40px;
+          font-size: 13px;
+        }
+
+        .fullGalleryTop {
+          top: 12px;
+          left: 12px;
+          right: 12px;
+        }
+
+        .fullGalleryTop button,
+        .fullGalleryTop span {
+          min-height: 40px;
+          padding: 0 12px;
+          font-size: 13px;
+        }
+
+        .fullArrow {
+          width: 46px;
+          height: 46px;
+          font-size: 34px;
+        }
+
+        .fullArrow.left { left: 12px; }
+        .fullArrow.right { right: 12px; }
+
+        .fullGalleryImage {
+          max-width: 100vw;
+          max-height: 72vh;
+        }
+
+        .fullGalleryImage.zoomed {
+          transform: scale(1.45);
+        }
+
+        .fullGalleryThumbs {
+          justify-content: flex-start;
+          bottom: 12px;
         }
 
         .contact {
