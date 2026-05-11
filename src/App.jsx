@@ -14,25 +14,6 @@ import {
   rectSortingStrategy,
   useSortable,
 } from "@dnd-kit/sortable";
-function ScrollToTop() {
-  const { pathname, hash } = useLocation();
-
-  useEffect(() => {
-    if (hash) {
-      setTimeout(() => {
-        const el = document.querySelector(hash);
-        if (el) {
-          el.scrollIntoView({ behavior: "smooth", block: "start" });
-        }
-      }, 100);
-    } else {
-      window.scrollTo(0, 0);
-    }
-  }, [pathname, hash]);
-
-  return null;
-}
-
 import { CSS } from "@dnd-kit/utilities";
 import logo from "./assets/logo.png";
 import heroVideo from "./assets/villa.mp4";
@@ -44,6 +25,7 @@ import {
   deleteDoc,
   updateDoc,
   doc,
+  serverTimestamp,
 } from "firebase/firestore";
 
 const ADMIN_PASSWORD = "1234";
@@ -211,6 +193,51 @@ function SEO({ title, description, image, url, type = "website" }) {
     }
     canonical.setAttribute("href", safeUrl);
   }, [title, description, image, url, type]);
+
+  return null;
+}
+
+function ScrollToTop() {
+  const { pathname, search, hash } = useLocation();
+
+  useEffect(() => {
+    const params = new URLSearchParams(search);
+    const scrollTarget = params.get("scroll");
+
+    if (scrollTarget) {
+      setTimeout(() => {
+        const el = document.getElementById(scrollTarget);
+
+        if (el) {
+          el.scrollIntoView({
+            behavior: "smooth",
+            block: "start",
+          });
+        }
+
+        window.history.replaceState({}, "", pathname);
+      }, 120);
+
+      return;
+    }
+
+    if (hash && pathname !== "/") {
+      setTimeout(() => {
+        const el = document.querySelector(hash);
+
+        if (el) {
+          el.scrollIntoView({
+            behavior: "smooth",
+            block: "start",
+          });
+        }
+      }, 120);
+
+      return;
+    }
+
+    window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+  }, [pathname, search, hash]);
 
   return null;
 }
@@ -409,7 +436,7 @@ function Header({ detail = false, admin, setAdmin, setAdminOpen }) {
   const navigate = useNavigate();
 
   const goListings = () => {
-    navigate("/#ilanlar");
+    navigate("/?scroll=ilanlar");
     setTimeout(() => {
       document.getElementById("ilanlar")?.scrollIntoView({ behavior: "smooth" });
     }, 50);
@@ -427,10 +454,10 @@ function Header({ detail = false, admin, setAdmin, setAdminOpen }) {
 
       {!detail && (
         <nav className="desktopNav">
-          <a href="#ilanlar">İlanlar</a>
-          <a href="#yatirim">Yatırım Rehberi</a>
-          <a href="#blog">Rehber</a>
-          <a href="#contact">İletişim</a>
+          <Link to="/?scroll=ilanlar">İlanlar</Link>
+          <Link to="/?scroll=yatirim">Yatırım Rehberi</Link>
+          <Link to="/?scroll=blog">Rehber</Link>
+          <Link to="/?scroll=contact">İletişim</Link>
         </nav>
       )}
 
@@ -1071,7 +1098,7 @@ function Home({
             <a href={`https://wa.me/${CONTACTS.whatsapp}`} target="_blank" rel="noreferrer" className="heroBtn">
               <LogoIcon type="whatsapp" /> WhatsApp ile İletişime Geç
             </a>
-            <a href="#ilanlar" className="ghostBtn">İlanları İncele</a>
+            <Link to="/?scroll=ilanlar" className="ghostBtn">İlanları İncele</Link>
           </div>
 
           <div className="statsGrid">
@@ -1248,7 +1275,7 @@ function ListingDetail({ ilanlar, favorites, toggleFavorite }) {
   }, [aktifFoto]);
 
   const goListings = () => {
-    navigate("/#ilanlar");
+    navigate("/?scroll=ilanlar");
     setTimeout(() => {
       document.getElementById("ilanlar")?.scrollIntoView({ behavior: "smooth" });
     }, 50);
@@ -1655,7 +1682,7 @@ function BlogPage({ blogs }) {
         <div className="blogCta">
           <h3>Karasu’da portföy mü arıyorsunuz?</h3>
           <p>Satılık, kiralık ve yatırım odaklı ilanlarımızı inceleyin.</p>
-          <Link to="/#ilanlar" className="heroBtn">İlanları İncele</Link>
+          <Link to="/?scroll=ilanlar" className="heroBtn">İlanları İncele</Link>
         </div>
       </main>
 
@@ -2374,11 +2401,9 @@ function App() {
 
   return (
     <>
-        <Style />
-
-  <ScrollToTop />
-
-  <Routes>
+      <Style />
+      <ScrollToTop />
+      <Routes>
         <Route
           path="/"
           element={
@@ -3726,40 +3751,26 @@ function Style() {
       }
 
       .backToListingsBtn {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        min-height: 50px;
+        padding: 0 22px;
+        border-radius: 999px;
+        border: 1px solid rgba(255,255,255,.12);
+        background: linear-gradient(135deg, #ff8c00, #ff6a00);
+        color: white !important;
+        font-weight: 950;
+        text-decoration: none;
+        cursor: pointer;
+        box-shadow: 0 12px 30px rgba(255,138,0,.32), 0 0 20px rgba(255,138,0,.12);
+        transition: transform .22s ease, box-shadow .22s ease;
+      }
 
-  margin: 24px 0;
-
-  padding: 14px 24px;
-
-  background: linear-gradient(135deg, #ff8c00, #ff6a00);
-  color: white !important;
-
-  border-radius: 14px;
-
-  font-size: 15px;
-  font-weight: 700;
-
-  text-decoration: none;
-
-  border: 1px solid rgba(255,255,255,0.08);
-
-  box-shadow:
-    0 10px 25px rgba(255,140,0,0.30),
-    0 0 20px rgba(255,140,0,0.12);
-
-  transition: all 0.25s ease;
-}
-
-.backToListingsBtn:hover {
-  transform: translateY(-3px) scale(1.03);
-
-  box-shadow:
-    0 18px 40px rgba(255,140,0,0.45),
-    0 0 30px rgba(255,140,0,0.18);
-}
+      .backToListingsBtn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 18px 42px rgba(255,138,0,.45), 0 0 28px rgba(255,138,0,.18);
       }
 
       .detailBadges { display: flex; gap: 10px; flex-wrap: wrap; }
