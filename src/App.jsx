@@ -15,14 +15,24 @@ import {
   useSortable,
 } from "@dnd-kit/sortable";
 function ScrollToTop() {
-  const { pathname } = useLocation();
+  const { pathname, hash } = useLocation();
 
   useEffect(() => {
-    window.scrollTo(0, 0);
-  }, [pathname]);
+    if (hash) {
+      setTimeout(() => {
+        const el = document.querySelector(hash);
+        if (el) {
+          el.scrollIntoView({ behavior: "smooth", block: "start" });
+        }
+      }, 100);
+    } else {
+      window.scrollTo(0, 0);
+    }
+  }, [pathname, hash]);
 
   return null;
 }
+
 import { CSS } from "@dnd-kit/utilities";
 import logo from "./assets/logo.png";
 import heroVideo from "./assets/villa.mp4";
