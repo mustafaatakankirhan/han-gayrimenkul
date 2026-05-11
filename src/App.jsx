@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { Link, Route, Routes, useNavigate, useParams } from "react-router-dom";
+import { Link, Route, Routes, useNavigate, useParams, useLocation } from "react-router-dom";
 import {
   DndContext,
   PointerSensor,
@@ -14,6 +14,15 @@ import {
   rectSortingStrategy,
   useSortable,
 } from "@dnd-kit/sortable";
+function ScrollToTop() {
+  const { pathname } = useLocation();
+
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [pathname]);
+
+  return null;
+}
 import { CSS } from "@dnd-kit/utilities";
 import logo from "./assets/logo.png";
 import heroVideo from "./assets/villa.mp4";
@@ -88,7 +97,7 @@ const BLOG_POSTS = [
       "Yazlık alırken sadece manzara değil; bina kalitesi, ulaşım, aidat, kira potansiyeli ve konum da önemlidir.",
     content:
       "Yazlık alımında en sık yapılan hata sadece dış görünüşe veya denize yakınlığa bakmaktır. Oysa bina yaşı, deprem yönetmeliği, site düzeni, aidat, otopark, ulaşım kolaylığı ve sezon dışı kullanım imkânı da değerlendirilmelidir. Doğru yazlık hem yaşam konforu hem de yatırım getirisi sağlar.",
-  },,
+  },
   {
     slug: "karasu-limandere-gayrimenkul-rehberi",
     title: "Karasu Limandere gayrimenkul rehberi",
@@ -980,6 +989,7 @@ function Home({
   ilanSil,
   favorites,
   toggleFavorite,
+  blogs,
 }) {
   const [filtre, setFiltre] = useState("Tümü");
   const [tur, setTur] = useState("Tümü");
@@ -1016,6 +1026,8 @@ function Home({
       })
       .sort((a, b) => Number(!!b.featured) - Number(!!a.featured));
   }, [ilanlar, filtre, tur, onlyFavorites, favorites, searchTerm]);
+
+  const publishedBlogs = useMemo(() => (blogs || []).filter((x) => x.isPublished !== false).slice(0, 3), [blogs]);
 
   return (
     <div className="page">
@@ -1176,14 +1188,23 @@ function Home({
         <h2 className="sectionTitle">Yatırım ve Gayrimenkul Rehberi</h2>
 
         <div className="blogGrid">
-          {BLOG_POSTS.map((post) => (
-            <Link to={`/rehber/${post.slug}`} className="blogCard" key={post.slug}>
-              <span>{post.category}</span>
-              <h3>{post.title}</h3>
-              <p>{post.excerpt}</p>
-              <strong>Devamını Oku →</strong>
-            </Link>
-          ))}
+          {publishedBlogs.length === 0 ? (
+            <div className="emptyState">Henüz yayında blog yazısı yok.</div>
+          ) : (
+            publishedBlogs.map((post) => (
+              <Link to={`/blog/${post.slug}`} className="blogCard" key={post.id || post.slug}>
+                {post.coverImage && <img src={post.coverImage} alt={post.title} className="blogCardImage" />}
+                <span>{post.category || "Rehber"}</span>
+                <h3>{post.title}</h3>
+                <p>{post.excerpt}</p>
+                <strong>Devamını Oku →</strong>
+              </Link>
+            ))
+          )}
+        </div>
+
+        <div className="blogMoreRow">
+          <Link to="/blog" className="heroBtn">Tüm Blog Yazıları</Link>
         </div>
       </section>
 
@@ -1497,45 +1518,123 @@ function ListingDetail({ ilanlar, favorites, toggleFavorite }) {
   );
 }
 
-function BlogPage() {
+function BlogListPage({ blogs }) {
+  const publishedBlogs = useMemo(
+    () => (blogs || []).filter((x) => x.isPublished !== false),
+    [blogs]
+  );
+
+  return (
+    <div className="page detailPage">
+      <SEO
+        title="Karasu Gayrimenkul Blog | Han Gayrimenkul"
+        description="Karasu, Kocaali, Ferizli, Söğütlü ve Sakarya çevresinde gayrimenkul, arsa, yazlık ve yatırım rehberleri."
+        image={DEFAULT_SEO_IMAGE}
+        url={`${SITE_URL}/blog`}
+        type="website"
+      />
+      <Header detail />
+
+      <main className="blogListPage">
+        <p className="sectionLabel">HAN GAYRİMENKUL BLOG</p>
+        <h1>Karasu Gayrimenkul ve Yatırım Rehberi</h1>
+        <p className="blogListLead">
+          Karasu, Kocaali, Ferizli, Söğütlü ve çevresinde gayrimenkul yatırımı yapmak isteyenler için bölge analizleri, arsa notları ve alım rehberleri.
+        </p>
+
+        {publishedBlogs.length === 0 ? (
+          <div className="emptyState">Henüz yayında blog yazısı yok.</div>
+        ) : (
+          <div className="blogGrid blogGridWide">
+            {publishedBlogs.map((post) => (
+              <Link to={`/blog/${post.slug}`} className="blogCard" key={post.id || post.slug}>
+                {post.coverImage && <img src={post.coverImage} alt={post.title} className="blogCardImage" />}
+                <span>{post.category || "Rehber"}</span>
+                <h3>{post.title}</h3>
+                <p>{post.excerpt}</p>
+                <strong>Devamını Oku →</strong>
+              </Link>
+            ))}
+          </div>
+        )}
+      </main>
+
+      <Contact />
+    </div>
+  );
+}
+
+function BlogPage({ blogs }) {
   const { slug } = useParams();
-  const post = BLOG_POSTS.find((item) => item.slug === slug);
+  const post = (blogs || []).find((item) => item.slug === slug && item.isPublished !== false);
 
   if (!post) {
     return (
       <div className="page detailPage">
         <Header detail />
         <div className="notFound">
-          <h2>Rehber yazısı bulunamadı</h2>
-          <Link className="heroBtn" to="/#blog">Rehbere Dön</Link>
+          <h2>Blog yazısı bulunamadı</h2>
+          <Link className="heroBtn" to="/blog">Bloga Dön</Link>
         </div>
       </div>
     );
   }
 
-  const blogUrl = `${SITE_URL}/rehber/${post.slug}`;
-  const blogDescription = post.excerpt;
+  const blogUrl = `${SITE_URL}/blog/${post.slug}`;
+  const blogDescription = post.excerpt || `${post.title} hakkında Han Gayrimenkul blog yazısı.`;
+  const paragraphs = String(post.content || "")
+    .split("\n")
+    .map((x) => x.trim())
+    .filter(Boolean);
+
+  const structuredData = {
+    "@context": "https://schema.org",
+    "@type": "BlogPosting",
+    headline: post.title,
+    description: blogDescription,
+    image: post.coverImage || DEFAULT_SEO_IMAGE,
+    url: blogUrl,
+    author: {
+      "@type": "Organization",
+      name: "Han Gayrimenkul",
+      url: SITE_URL,
+    },
+    publisher: {
+      "@type": "Organization",
+      name: "Han Gayrimenkul",
+      url: SITE_URL,
+    },
+  };
 
   return (
     <div className="page detailPage">
       <SEO
-        title={`${post.title} | Han Gayrimenkul Karasu Rehberi`}
+        title={`${post.title} | Han Gayrimenkul Blog`}
         description={blogDescription}
-        image={DEFAULT_SEO_IMAGE}
+        image={post.coverImage || DEFAULT_SEO_IMAGE}
         url={blogUrl}
         type="article"
       />
+      <script type="application/ld+json">
+        {JSON.stringify(structuredData)}
+      </script>
 
       <Header detail />
 
       <main className="blogDetail">
-        <Link className="backToListingsBtn" to="/#blog">← Rehbere Dön</Link>
-        <span className="blogDetailCategory">{post.category}</span>
+        <Link className="backToListingsBtn" to="/blog">← Bloga Dön</Link>
+        {post.coverImage && <img src={post.coverImage} alt={post.title} className="blogHeroImage" />}
+        <span className="blogDetailCategory">{post.category || "Rehber"}</span>
         <h1>{post.title}</h1>
         <p className="blogLead">{post.excerpt}</p>
 
         <article>
-          <p>{post.content}</p>
+          {paragraphs.length > 0 ? (
+            paragraphs.map((paragraph, index) => <p key={index}>{paragraph}</p>)
+          ) : (
+            <p>Bu blog yazısı yakında güncellenecektir.</p>
+          )}
+
           <h2>Han Gayrimenkul ile doğru portföy seçimi</h2>
           <p>
             Gayrimenkul alımında doğru bilgi, doğru konum ve doğru fiyat analizi önemlidir.
@@ -1649,6 +1748,238 @@ function AdminListingManager({ ilanlar, ilanDuzenle, ilanSil }) {
   );
 }
 
+function BlogAdminPanel({
+  blogForm,
+  setBlogForm,
+  blogDuzenlenenId,
+  blogKaydet,
+  setBlogDuzenlenenId,
+  bosBlogForm,
+}) {
+  const [uploading, setUploading] = React.useState(false);
+
+  const uploadBlogCover = async (file) => {
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      alert("Lütfen görsel dosyası seç.");
+      return;
+    }
+
+    setUploading(true);
+
+    try {
+      const data = new FormData();
+      data.append("file", file);
+      data.append("upload_preset", CLOUDINARY_UPLOAD_PRESET);
+      data.append("folder", "han-gayrimenkul-blog");
+
+      const response = await fetch(
+        `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`,
+        { method: "POST", body: data }
+      );
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(errorText || "Blog kapak görseli yükleme hatası");
+      }
+
+      const result = await response.json();
+      setBlogForm((prev) => ({
+        ...prev,
+        coverImage: optimizeCloudinaryUrl(result.secure_url),
+      }));
+    } catch (error) {
+      console.error(error);
+      alert("Kapak görseli yüklenemedi. Cloudinary ayarını kontrol et.");
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  return (
+    <section className="adminPanel proAdminPanel blogAdminPanel">
+      <div className="adminHead">
+        <div>
+          <p className="adminEyebrow">BLOG YÖNETİMİ</p>
+          <h2 className="adminTitle">{blogDuzenlenenId ? "Blog Yazısı Düzenle" : "Yeni Blog Yazısı Ekle"}</h2>
+        </div>
+
+        <label className="featuredToggle">
+          <input
+            type="checkbox"
+            checked={!!blogForm.isPublished}
+            onChange={(e) => setBlogForm({ ...blogForm, isPublished: e.target.checked })}
+          />
+          <span>Yayında</span>
+        </label>
+      </div>
+
+      <div className="adminSection">
+        <h3>Blog Bilgileri</h3>
+        <div className="formGrid">
+          <input
+            className="input"
+            placeholder="Blog başlığı örn: Karasu’da Yatırım Yapılır mı?"
+            value={blogForm.title}
+            onChange={(e) => {
+              const title = e.target.value;
+              setBlogForm({ ...blogForm, title, slug: blogForm.slugTouched ? blogForm.slug : slugify(title) });
+            }}
+          />
+          <input
+            className="input"
+            placeholder="URL adı / slug"
+            value={blogForm.slug}
+            onChange={(e) => setBlogForm({ ...blogForm, slug: slugify(e.target.value), slugTouched: true })}
+          />
+          <input
+            className="input"
+            placeholder="Kategori örn: Yatırım Rehberi"
+            value={blogForm.category}
+            onChange={(e) => setBlogForm({ ...blogForm, category: e.target.value })}
+          />
+          <input
+            className="input"
+            placeholder="Kapak görseli linki"
+            value={blogForm.coverImage}
+            onChange={(e) => setBlogForm({ ...blogForm, coverImage: e.target.value })}
+          />
+        </div>
+
+        <div className="videoUploadBox blogCoverUpload">
+          <div>
+            <strong>🖼️ Blog Kapak Görseli</strong>
+            <p>Kapak görseli Google ve sosyal paylaşımda daha profesyonel görünür.</p>
+          </div>
+          <label className="uploadBtn">
+            {uploading ? "Yükleniyor..." : "Kapak Seç"}
+            <input
+              type="file"
+              accept="image/*"
+              disabled={uploading}
+              onChange={(e) => uploadBlogCover(e.target.files?.[0])}
+            />
+          </label>
+        </div>
+
+        {blogForm.coverImage && (
+          <div className="blogCoverPreview">
+            <img src={blogForm.coverImage} alt="Blog kapak önizleme" />
+          </div>
+        )}
+
+        <textarea
+          className="textarea"
+          placeholder="Kısa açıklama / Google açıklaması"
+          value={blogForm.excerpt}
+          onChange={(e) => setBlogForm({ ...blogForm, excerpt: e.target.value })}
+        />
+
+        <textarea
+          className="textarea blogContentTextarea"
+          placeholder="Blog içeriği. Paragrafları alt alta yaz; sitede otomatik paragraf olarak görünür."
+          value={blogForm.content}
+          onChange={(e) => setBlogForm({ ...blogForm, content: e.target.value })}
+        />
+      </div>
+
+      <div className="adminActions">
+        <button className="addBtn" onClick={blogKaydet} disabled={uploading}>
+          {blogDuzenlenenId ? "Blogu Güncelle" : "Blogu Ekle"}
+        </button>
+
+        {blogDuzenlenenId && (
+          <button
+            className="cancelBtn"
+            onClick={() => {
+              setBlogDuzenlenenId(null);
+              setBlogForm(bosBlogForm);
+            }}
+          >
+            Vazgeç
+          </button>
+        )}
+      </div>
+    </section>
+  );
+}
+
+function BlogAdminManager({ blogs, blogDuzenle, blogSil }) {
+  const [blogSearch, setBlogSearch] = React.useState("");
+
+  const filtered = React.useMemo(() => {
+    const q = blogSearch.trim().toLowerCase();
+    return [...(blogs || [])].filter((post) => {
+      if (!q) return true;
+      return [post.title, post.category, post.excerpt, post.slug]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase()
+        .includes(q);
+    });
+  }, [blogs, blogSearch]);
+
+  return (
+    <section className="adminListPanel">
+      <div className="adminListHead">
+        <div>
+          <p className="adminEyebrow">BLOG YÖNETİMİ</p>
+          <h2>Mevcut Blog Yazıları</h2>
+        </div>
+
+        <div className="adminSearchBox">
+          <span>🔎</span>
+          <input
+            value={blogSearch}
+            onChange={(e) => setBlogSearch(e.target.value)}
+            placeholder="Blog ara..."
+          />
+        </div>
+      </div>
+
+      {filtered.length === 0 ? (
+        <div className="emptyState">Admin panelde gösterilecek blog yazısı bulunamadı.</div>
+      ) : (
+        <div className="adminListingGrid blogAdminGrid">
+          {filtered.map((post) => (
+            <article className="adminListingCard" key={post.id}>
+              <div className="adminListingImage">
+                {post.coverImage ? (
+                  <img src={post.coverImage} alt={post.title} />
+                ) : (
+                  <div className="blogNoImage">Blog</div>
+                )}
+                <span>{post.isPublished !== false ? "Yayında" : "Pasif"}</span>
+              </div>
+
+              <div className="adminListingInfo">
+                <div className="adminListingBadges">
+                  <b>{post.category || "Rehber"}</b>
+                  <b>/blog/{post.slug}</b>
+                </div>
+                <h3>{post.title}</h3>
+                <p>{post.excerpt}</p>
+              </div>
+
+              <div className="adminListingActions">
+                <Link className="adminEditBtn" to={`/blog/${post.slug}`} target="_blank">
+                  Gör
+                </Link>
+                <button className="adminEditBtn" onClick={() => blogDuzenle(post)}>
+                  Düzenle
+                </button>
+                <button className="adminDeleteBtn" onClick={() => blogSil(post.id)}>
+                  Sil
+                </button>
+              </div>
+            </article>
+          ))}
+        </div>
+      )}
+    </section>
+  );
+}
+
 function AdminPage({
   admin,
   setAdmin,
@@ -1664,6 +1995,15 @@ function AdminPage({
   ilanlar,
   ilanDuzenle,
   ilanSil,
+  blogs,
+  blogForm,
+  setBlogForm,
+  blogDuzenlenenId,
+  blogKaydet,
+  setBlogDuzenlenenId,
+  bosBlogForm,
+  blogDuzenle,
+  blogSil,
 }) {
   return (
     <div className="page adminRoutePage">
@@ -1695,7 +2035,7 @@ function AdminPage({
             <div className="adminRouteTop">
               <div>
                 <p className="adminEyebrow">GİZLİ PANEL</p>
-                <h1>İlan Yönetimi</h1>
+                <h1>İlan ve Blog Yönetimi</h1>
               </div>
               <button className="navPill" onClick={() => setAdmin(false)}>
                 Çıkış Yap
@@ -1715,6 +2055,30 @@ function AdminPage({
               ilanlar={ilanlar}
               ilanDuzenle={ilanDuzenle}
               ilanSil={ilanSil}
+              blogs={blogs}
+              blogForm={blogForm}
+              setBlogForm={setBlogForm}
+              blogDuzenlenenId={blogDuzenlenenId}
+              blogKaydet={blogKaydet}
+              setBlogDuzenlenenId={setBlogDuzenlenenId}
+              bosBlogForm={bosBlogForm}
+              blogDuzenle={blogDuzenle}
+              blogSil={blogSil}
+            />
+
+            <BlogAdminPanel
+              blogForm={blogForm}
+              setBlogForm={setBlogForm}
+              blogDuzenlenenId={blogDuzenlenenId}
+              blogKaydet={blogKaydet}
+              setBlogDuzenlenenId={setBlogDuzenlenenId}
+              bosBlogForm={bosBlogForm}
+            />
+
+            <BlogAdminManager
+              blogs={blogs}
+              blogDuzenle={blogDuzenle}
+              blogSil={blogSil}
             />
           </>
         )}
@@ -1788,10 +2152,12 @@ function Contact() {
 
 function App() {
   const [ilanlar, setIlanlar] = useState([]);
+  const [blogs, setBlogs] = useState([]);
   const [admin, setAdmin] = useState(false);
   const [adminOpen, setAdminOpen] = useState(false);
   const [sifre, setSifre] = useState("");
   const [duzenlenenId, setDuzenlenenId] = useState(null);
+  const [blogDuzenlenenId, setBlogDuzenlenenId] = useState(null);
   const [favorites, setFavorites] = useState(() => {
     try {
       return JSON.parse(localStorage.getItem("han_favorites") || "[]");
@@ -1830,6 +2196,19 @@ function App() {
     coverIndex: 0,
   };
 
+  const bosBlogForm = {
+    title: "",
+    slug: "",
+    slugTouched: false,
+    excerpt: "",
+    category: "Yatırım Rehberi",
+    coverImage: "",
+    content: "",
+    isPublished: true,
+  };
+
+  const [blogForm, setBlogForm] = useState(bosBlogForm);
+
   const [form, setForm] = useState(bosForm);
 
   const ilanlariGetir = async () => {
@@ -1838,8 +2217,20 @@ function App() {
     setIlanlar(data);
   };
 
+  const bloglariGetir = async () => {
+    const snapshot = await getDocs(collection(db, "blogs"));
+    const data = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
+    data.sort((a, b) => {
+      const ad = a.createdAt?.toDate ? a.createdAt.toDate().getTime() : 0;
+      const bd = b.createdAt?.toDate ? b.createdAt.toDate().getTime() : 0;
+      return bd - ad;
+    });
+    setBlogs(data);
+  };
+
   useEffect(() => {
     ilanlariGetir();
+    bloglariGetir();
   }, []);
 
   const girisYap = () => {
@@ -1915,10 +2306,69 @@ function App() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
+
+  const blogKaydet = async () => {
+    const title = safeText(blogForm.title);
+    const slug = slugify(blogForm.slug || blogForm.title);
+
+    if (!title || !slug || !safeText(blogForm.excerpt) || !safeText(blogForm.content)) {
+      alert("Blog için başlık, slug, kısa açıklama ve içerik zorunlu.");
+      return;
+    }
+
+    const payload = {
+      title,
+      slug,
+      excerpt: safeText(blogForm.excerpt),
+      category: safeText(blogForm.category) || "Rehber",
+      coverImage: safeText(blogForm.coverImage),
+      content: String(blogForm.content || "").trim(),
+      isPublished: blogForm.isPublished !== false,
+      updatedAt: serverTimestamp(),
+    };
+
+    if (blogDuzenlenenId) {
+      await updateDoc(doc(db, "blogs", blogDuzenlenenId), payload);
+      setBlogDuzenlenenId(null);
+    } else {
+      await addDoc(collection(db, "blogs"), {
+        ...payload,
+        createdAt: serverTimestamp(),
+      });
+    }
+
+    setBlogForm(bosBlogForm);
+    bloglariGetir();
+  };
+
+  const blogSil = async (id) => {
+    if (!confirm("Bu blog yazısı silinsin mi?")) return;
+    await deleteDoc(doc(db, "blogs", id));
+    bloglariGetir();
+  };
+
+  const blogDuzenle = (post) => {
+    setBlogForm({
+      title: post.title || "",
+      slug: post.slug || "",
+      slugTouched: true,
+      excerpt: post.excerpt || "",
+      category: post.category || "Yatırım Rehberi",
+      coverImage: post.coverImage || "",
+      content: post.content || "",
+      isPublished: post.isPublished !== false,
+    });
+    setBlogDuzenlenenId(post.id);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
   return (
     <>
-      <Style />
-      <Routes>
+        <Style />
+
+  <ScrollToTop />
+
+  <Routes>
         <Route
           path="/"
           element={
@@ -1941,6 +2391,7 @@ function App() {
               ilanSil={ilanSil}
               favorites={favorites}
               toggleFavorite={toggleFavorite}
+              blogs={blogs}
             />
           }
         />
@@ -1954,7 +2405,9 @@ function App() {
             />
           }
         />
-        <Route path="/rehber/:slug" element={<BlogPage />} />
+        <Route path="/blog" element={<BlogListPage blogs={blogs} />} />
+        <Route path="/blog/:slug" element={<BlogPage blogs={blogs} />} />
+        <Route path="/rehber/:slug" element={<BlogPage blogs={blogs} />} />
         <Route
           path="/admin"
           element={
@@ -1973,6 +2426,15 @@ function App() {
               ilanlar={ilanlar}
               ilanDuzenle={ilanDuzenle}
               ilanSil={ilanSil}
+              blogs={blogs}
+              blogForm={blogForm}
+              setBlogForm={setBlogForm}
+              blogDuzenlenenId={blogDuzenlenenId}
+              blogKaydet={blogKaydet}
+              setBlogDuzenlenenId={setBlogDuzenlenenId}
+              bosBlogForm={bosBlogForm}
+              blogDuzenle={blogDuzenle}
+              blogSil={blogSil}
             />
           }
         />
@@ -3254,14 +3716,40 @@ function Style() {
       }
 
       .backToListingsBtn {
-        min-height: 48px;
-        padding: 0 18px;
-        border-radius: 999px;
-        border: 1px solid rgba(255,138,0,.5);
-        background: rgba(255,138,0,.12);
-        color: white;
-        font-weight: 950;
-        cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+
+  margin: 24px 0;
+
+  padding: 14px 24px;
+
+  background: linear-gradient(135deg, #ff8c00, #ff6a00);
+  color: white !important;
+
+  border-radius: 14px;
+
+  font-size: 15px;
+  font-weight: 700;
+
+  text-decoration: none;
+
+  border: 1px solid rgba(255,255,255,0.08);
+
+  box-shadow:
+    0 10px 25px rgba(255,140,0,0.30),
+    0 0 20px rgba(255,140,0,0.12);
+
+  transition: all 0.25s ease;
+}
+
+.backToListingsBtn:hover {
+  transform: translateY(-3px) scale(1.03);
+
+  box-shadow:
+    0 18px 40px rgba(255,140,0,0.45),
+    0 0 30px rgba(255,140,0,0.18);
+}
       }
 
       .detailBadges { display: flex; gap: 10px; flex-wrap: wrap; }
@@ -4352,6 +4840,113 @@ function Style() {
           width: 100%;
           max-width: 360px;
         }
+      }
+
+
+
+      .blogMoreRow {
+        margin-top: 26px;
+        display: flex;
+        justify-content: center;
+      }
+
+      .blogCardImage {
+        width: 100%;
+        height: 190px;
+        object-fit: cover;
+        border-radius: 18px;
+        margin-bottom: 16px;
+        border: 1px solid rgba(255,255,255,.12);
+      }
+
+      .blogListPage {
+        width: min(1180px, 92vw);
+        margin: 0 auto;
+        padding: 86px 0 40px;
+      }
+
+      .blogListPage h1 {
+        margin: 12px 0 16px;
+        font-size: clamp(38px, 5vw, 72px);
+        line-height: 1;
+        letter-spacing: -2px;
+      }
+
+      .blogListLead {
+        max-width: 760px;
+        color: rgba(255,255,255,.78);
+        font-size: 19px;
+        line-height: 1.7;
+        font-weight: 650;
+        margin-bottom: 34px;
+      }
+
+      .blogGridWide {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+
+      .blogHeroImage {
+        width: 100%;
+        max-height: 430px;
+        object-fit: cover;
+        border-radius: 30px;
+        border: 1px solid rgba(255,255,255,.12);
+        margin-bottom: 28px;
+        box-shadow: 0 25px 70px rgba(0,0,0,.38);
+      }
+
+      .blogContentTextarea {
+        min-height: 260px;
+      }
+
+      .blogCoverUpload {
+        margin-top: 18px;
+      }
+
+      .blogCoverPreview {
+        margin-top: 18px;
+        max-width: 380px;
+        border-radius: 22px;
+        overflow: hidden;
+        border: 1px solid rgba(255,255,255,.12);
+      }
+
+      .blogCoverPreview img {
+        width: 100%;
+        height: 210px;
+        object-fit: cover;
+        display: block;
+      }
+
+      .blogNoImage {
+        width: 100%;
+        height: 100%;
+        min-height: 150px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(255,138,0,.12);
+        color: var(--orange);
+        font-weight: 950;
+        font-size: 28px;
+      }
+
+      .blogAdminPanel {
+        margin-top: 34px;
+        border-color: rgba(255,138,0,.32);
+      }
+
+      .blogAdminGrid .adminListingCard {
+        min-height: 220px;
+      }
+
+      .blogAdminGrid .adminListingImage {
+        min-height: 180px;
+      }
+
+      @media (max-width: 900px) {
+        .blogGridWide { grid-template-columns: 1fr; }
+        .blogListPage { padding-top: 54px; }
       }
 
       @media (max-width: 420px) {
