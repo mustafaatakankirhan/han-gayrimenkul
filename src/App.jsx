@@ -5574,32 +5574,33 @@ margin: 28px auto 0;
         position: relative;
         width: 100%;
         height: 92vh;
-        min-height: 500px;
+        min-height: 520px;
         background-size: cover;
-        background-position: center;
+        background-position: center top;
         background-repeat: no-repeat;
         display: flex;
         flex-direction: column;
         justify-content: flex-end;
         overflow: hidden;
-        transition: background-image 0.4s ease;
+        image-rendering: auto;
       }
       .detailHeroOverlay {
         position: absolute;
         inset: 0;
-        background: linear-gradient(to bottom, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0.2) 40%, rgba(0,0,0,0.85) 100%);
+        background: linear-gradient(to bottom, rgba(0,0,0,0.05) 0%, rgba(0,0,0,0.15) 35%, rgba(0,0,0,0.7) 65%, rgba(0,0,0,0.92) 100%);
       }
       .detailHeroBack {
         position: absolute;
-        top: 100px;
-        left: 28px;
+        top: 90px;
+        left: 24px;
         z-index: 10;
-        background: rgba(0,0,0,0.5);
-        backdrop-filter: blur(12px);
-        border: 1px solid rgba(255,255,255,.2);
+        background: rgba(0,0,0,0.55);
+        backdrop-filter: blur(16px);
+        border: 1px solid rgba(255,255,255,.18);
         color: white;
         border-radius: 999px;
-        padding: 10px 20px;
+        padding: 9px 18px;
+        font-size: 14px;
         font-weight: 700;
         cursor: pointer;
         transition: background .2s;
@@ -5608,7 +5609,8 @@ margin: 28px auto 0;
       .detailHeroInfo {
         position: relative;
         z-index: 10;
-        padding: 0 40px 24px;
+        padding: 0 40px 20px;
+        max-width: 800px;
       }
       .detailHeroBadges { display: flex; gap: 8px; margin-bottom: 12px; }
       .detailHeroBadge {
@@ -5623,28 +5625,29 @@ margin: 28px auto 0;
       }
       .detailHeroBadge.status { background: var(--orange); border-color: var(--orange); }
       .detailHeroTitle {
-        font-size: clamp(22px, 4vw, 42px);
+        font-size: clamp(20px, 3vw, 36px);
         font-weight: 800;
         color: white;
         margin: 0 0 8px;
-        text-shadow: 0 2px 20px rgba(0,0,0,0.5);
-        line-height: 1.2;
+        text-shadow: 0 2px 24px rgba(0,0,0,0.8), 0 1px 4px rgba(0,0,0,0.6);
+        line-height: 1.25;
         text-transform: none;
+        letter-spacing: -0.3px;
       }
       .detailHeroLocation { color: rgba(255,255,255,.8); margin: 0 0 6px; font-size: 15px; }
       .detailHeroPrice {
-        font-size: clamp(24px, 4vw, 40px);
+        font-size: clamp(22px, 3vw, 36px);
         font-weight: 950;
         color: var(--orange);
         margin: 0;
-        text-shadow: 0 2px 12px rgba(0,0,0,0.4);
+        text-shadow: 0 2px 16px rgba(0,0,0,0.6);
       }
       .detailHeroActions {
         position: relative;
         z-index: 10;
         display: flex;
-        gap: 10px;
-        padding: 16px 40px 32px;
+        gap: 8px;
+        padding: 12px 40px 28px;
         flex-wrap: wrap;
       }
       .detailHeroBtn {
@@ -5707,18 +5710,18 @@ margin: 28px auto 0;
 
       .detailThumbStrip {
         display: flex;
-        gap: 8px;
-        padding: 12px 40px;
+        gap: 6px;
+        padding: 10px 28px;
         overflow-x: auto;
-        background: rgba(0,0,0,.6);
-        backdrop-filter: blur(10px);
+        background: rgba(5,5,5,0.95);
+        border-bottom: 1px solid rgba(255,255,255,.08);
         scrollbar-width: none;
       }
       .detailThumbStrip::-webkit-scrollbar { display: none; }
       .detailThumbItem {
         flex-shrink: 0;
-        width: 80px;
-        height: 56px;
+        width: 90px;
+        height: 64px;
         border-radius: 10px;
         overflow: hidden;
         border: 2px solid transparent;
