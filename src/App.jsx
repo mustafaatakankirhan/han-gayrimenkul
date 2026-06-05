@@ -1422,7 +1422,7 @@ function ListingDetail({ ilanlar, favorites, toggleFavorite }) {
     setAktifSekme("aciklama");
     window.scrollTo(0, 0);
     setMounted(false);
-    setTimeout(() => setMounted(true), 60);
+    setTimeout(() => setMounted(true), 80);
   }, [slug]);
 
   useEffect(() => { setZoomed(false); }, [aktifFoto]);
@@ -1462,98 +1462,108 @@ function ListingDetail({ ilanlar, favorites, toggleFavorite }) {
   const seoDescription = `${ilan.price || ""} ${ilan.status || ""} ${ilan.type || "gayrimenkul"} - ${ilan.location || "Sakarya Karasu"}. Detaylı bilgi ve randevu için Han Gayrimenkul ile iletişime geçin.`;
 
   const sekmeler = [
-    { id: "aciklama", label: "📋 Açıklama" },
-    { id: "ozellikler", label: "🏠 Özellikler" },
-    { id: "yatirim", label: "💰 Yatırım" },
-    ...(ilan.videoUrl ? [{ id: "video", label: "▶ Video" }] : []),
+    { id: "aciklama", label: "Açıklama" },
+    { id: "ozellikler", label: "Özellikler" },
+    { id: "yatirim", label: "Yatırım" },
+    ...(ilan.videoUrl ? [{ id: "video", label: "Video" }] : []),
   ];
 
+  const toTitleCase = (str) => str ? str.toLowerCase().replace(/\w/g, c => c.toUpperCase()) : str;
+
   return (
-    <div className="page detailPage" style={{ opacity: mounted ? 1 : 0, transition: "opacity 0.5s ease" }}>
+    <div className="page detailPage" style={{ opacity: mounted ? 1 : 0, transition: "opacity 0.6s ease" }}>
       <SEO title={seoTitle} description={seoDescription} image={current || DEFAULT_SEO_IMAGE} url={detailUrl} type="article" />
       <Header detail />
 
-      <div
-        className="detailHero"
-        onTouchStart={dokunmaBasla}
-        onTouchEnd={dokunmaBitir}
-        style={{ backgroundImage: `url(${current})` }}
-      >
-        <div className="detailHeroOverlay" />
-        <button className="detailHeroBack" onClick={goListings}>← Geri Dön</button>
+      {/* SPLIT LAYOUT: Sol galeri, Sağ bilgi */}
+      <div className="premiumDetail">
 
-        <div className="detailHeroInfo">
-          <div className="detailHeroBadges">
-            <span className="detailHeroBadge status">{ilan.status || "Satılık"}</span>
-            {ilan.type && <span className="detailHeroBadge">{ilan.type}</span>}
+        {/* SOL — GALERİ */}
+        <div className="premiumGallery">
+          <div
+            className="premiumMainImg"
+            onTouchStart={dokunmaBasla}
+            onTouchEnd={dokunmaBitir}
+            onClick={() => setFullGallery(true)}
+          >
+            <img src={current} alt={ilan.title} />
+            <button className="premiumFullBtn" onClick={(e) => { e.stopPropagation(); setFullGallery(true); }}>
+              ⛶ {fotolar.length} Fotoğraf
+            </button>
+            {fotolar.length > 1 && (
+              <>
+                <button className="premiumArrow left" onClick={(e) => { e.stopPropagation(); oncekiFoto(); }}>‹</button>
+                <button className="premiumArrow right" onClick={(e) => { e.stopPropagation(); sonrakiFoto(); }}>›</button>
+              </>
+            )}
+            <div className="premiumImgCounter">{aktifFoto + 1} / {fotolar.length}</div>
           </div>
-          <h1 className="detailHeroTitle">{ilan.title}</h1>
-          <p className="detailHeroLocation">📍 {ilan.location}</p>
-          <p className="detailHeroPrice">{ilan.price}</p>
-        </div>
 
-        <div className="detailHeroActions">
-          <button className="detailHeroBtn wa" onClick={() => window.open(whatsappLink(ilan), "_blank")}>
-            <img src={ICONS.whatsapp} alt="" style={{width:20,height:20}} /> WhatsApp
-          </button>
-          <button className="detailHeroBtn share" onClick={() => shareToWhatsApp(ilan)}>💾 Kaydet</button>
-          <button className="detailHeroBtn gallery" onClick={() => setFullGallery(true)}>🖼 {fotolar.length} Fotoğraf</button>
-          <FavoriteButton id={ilan.id} favorites={favorites} toggleFavorite={toggleFavorite} />
-        </div>
-
-        {fotolar.length > 1 && (
-          <>
-            <button className="detailHeroArrow left" onClick={oncekiFoto}>‹</button>
-            <button className="detailHeroArrow right" onClick={sonrakiFoto}>›</button>
-            <div className="detailHeroDots">
-              {fotolar.slice(0, 8).map((_, i) => (
-                <button key={i} className={`heroDot ${i === aktifFoto ? "active" : ""}`} onClick={() => setAktifFoto(i)} />
+          {fotolar.length > 1 && (
+            <div className="premiumThumbs">
+              {fotolar.map((foto, i) => (
+                <button
+                  key={i}
+                  className={`premiumThumb ${i === aktifFoto ? "active" : ""}`}
+                  onClick={() => setAktifFoto(i)}
+                >
+                  <img src={foto} alt={`${i + 1}`} />
+                </button>
               ))}
             </div>
-          </>
-        )}
-      </div>
-
-      {fotolar.length > 1 && (
-        <div className="detailThumbStrip">
-          {fotolar.map((foto, i) => (
-            <button key={i} className={`detailThumbItem ${i === aktifFoto ? "active" : ""}`} onClick={() => setAktifFoto(i)}>
-              <img src={foto} alt={`${i + 1}`} />
-            </button>
-          ))}
+          )}
         </div>
-      )}
 
-      <div className="detailContent">
-        <div className="detailMain">
-          <div className="detailTabs">
+        {/* SAĞ — BİLGİ */}
+        <div className="premiumInfo">
+          <button className="premiumBack" onClick={goListings}>← Geri Dön</button>
+
+          <div className="premiumBadges">
+            {ilan.status && <span className="premiumBadge orange">{ilan.status}</span>}
+            {ilan.type && <span className="premiumBadge dark">{ilan.type}</span>}
+            <span className="premiumBadge dark">Güncel Portföy</span>
+          </div>
+
+          <h1 className="premiumTitle">{toTitleCase(ilan.title)}</h1>
+          <p className="premiumLocation">📍 {ilan.location}</p>
+          <p className="premiumPrice">{ilan.price}</p>
+
+          <div className="premiumQuickStats">
+            {ilan.rooms && <div><span>🛏</span><p>{ilan.rooms} Oda</p></div>}
+            {ilan.area && <div><span>📐</span><p>{ilan.area} m²</p></div>}
+            {ilan.status && <div><span>🏷</span><p>{ilan.status}</p></div>}
+            {ilan.type && <div><span>🏠</span><p>{ilan.type}</p></div>}
+          </div>
+
+          {/* SEKMELER */}
+          <div className="premiumTabs">
             {sekmeler.map(s => (
-              <button key={s.id} className={`detailTab ${aktifSekme === s.id ? "active" : ""}`} onClick={() => setAktifSekme(s.id)}>
+              <button key={s.id} className={`premiumTab ${aktifSekme === s.id ? "active" : ""}`} onClick={() => setAktifSekme(s.id)}>
                 {s.label}
               </button>
             ))}
           </div>
 
-          <div className="detailTabContent">
+          <div className="premiumTabContent">
             {aktifSekme === "aciklama" && (
-              <div className="detailTabPane">
-                <p className="detailDesc">{ilan.description || "Bu ilan hakkında detaylı bilgi almak için bizimle iletişime geçebilirsiniz."}</p>
+              <div className="premiumTabPane">
+                <p className="premiumDesc">{ilan.description || "Bu ilan hakkında detaylı bilgi almak için bizimle iletişime geçebilirsiniz."}</p>
                 {ilan.maps && (
-                  <a href={ilan.maps} target="_blank" rel="noreferrer" className="detailMapLink">
-                    🗺 Google Maps'te Görüntüle
+                  <a href={ilan.maps} target="_blank" rel="noreferrer" className="premiumMapLink">
+                    🗺 Haritada Görüntüle
                   </a>
                 )}
               </div>
             )}
             {aktifSekme === "ozellikler" && (
-              <div className="detailTabPane">
-                <div className="detailFeatureGrid2">
+              <div className="premiumTabPane">
+                <div className="premiumFeatureGrid">
                   {buildFeatureList(ilan).map((item, i) => (
-                    <div className="detailFeature2" key={i}>
-                      <span className="featureIcon2">{item.icon}</span>
+                    <div className="premiumFeature" key={i}>
+                      <span>{item.icon}</span>
                       <div>
-                        <p className="featureLabel2">{item.label}</p>
-                        <p className="featureValue2">{item.value}</p>
+                        <p>{item.label}</p>
+                        <strong>{item.value}</strong>
                       </div>
                     </div>
                   ))}
@@ -1561,56 +1571,39 @@ function ListingDetail({ ilanlar, favorites, toggleFavorite }) {
               </div>
             )}
             {aktifSekme === "yatirim" && (
-              <div className="detailTabPane">
-                <div className="yatirimBox">
-                  <span className="yatirimIcon">💡</span>
+              <div className="premiumTabPane">
+                <div className="premiumYatirim">
+                  <span>💡</span>
                   <p>{shortPropertyNote(ilan)}</p>
-                </div>
-                <div className="trustStrip2">
-                  <div><strong>Şeffaf</strong><span>Bilgi paylaşımı</span></div>
-                  <div><strong>Hızlı</strong><span>WhatsApp dönüşü</span></div>
-                  <div><strong>Yerel</strong><span>Karasu uzmanlığı</span></div>
                 </div>
               </div>
             )}
             {aktifSekme === "video" && ilan.videoUrl && (
-              <div className="detailTabPane">
-                <video src={ilan.videoUrl} controls playsInline preload="metadata" style={{ width: "100%", borderRadius: 16, maxHeight: 400 }} />
+              <div className="premiumTabPane">
+                <video src={ilan.videoUrl} controls playsInline preload="metadata" style={{ width: "100%", borderRadius: 14, maxHeight: 280 }} />
               </div>
             )}
           </div>
-        </div>
 
-        <div className="detailSidebar">
-          <div className="detailSideCard">
-            <p className="sideCardPrice">{ilan.price}</p>
-            <p className="sideCardTitle">{ilan.title}</p>
-            <p className="sideCardLocation">📍 {ilan.location}</p>
-            <div className="sideCardFeatures">
-              {ilan.rooms && <div><span>🛏</span><p>{ilan.rooms}</p></div>}
-              {ilan.area && <div><span>📐</span><p>{ilan.area} m²</p></div>}
-              {ilan.type && <div><span>🏠</span><p>{ilan.type}</p></div>}
-              {ilan.status && <div><span>🏷</span><p>{ilan.status}</p></div>}
-            </div>
-            <a href={whatsappLink(ilan)} target="_blank" rel="noreferrer" className="sideCardWa">
+          {/* CTA BUTONLAR */}
+          <div className="premiumCTA">
+            <a href={whatsappLink(ilan)} target="_blank" rel="noreferrer" className="premiumCtaWa">
               <img src={ICONS.whatsapp} alt="" style={{width:20,height:20}} /> WhatsApp ile Bilgi Al
             </a>
-            <a href={ilan.instagram || CONTACTS.instagram} target="_blank" rel="noreferrer" className="sideCardInsta">
-              <LogoIcon type="instagram" /> Instagram'da Gör
+            <a href={ilan.instagram || CONTACTS.instagram} target="_blank" rel="noreferrer" className="premiumCtaInsta">
+              <LogoIcon type="instagram" /> Instagram
             </a>
-            {ilan.maps && (
-              <a href={ilan.maps} target="_blank" rel="noreferrer" className="sideCardMap">
-                🗺 Haritada Aç
-              </a>
-            )}
-            <div className="sideCardShare">
-              <button onClick={() => shareToWhatsApp(ilan)}>💾 Kaydet</button>
-              <button onClick={() => shareListing(ilan)}>↗ Paylaş</button>
-            </div>
+          </div>
+
+          <div className="premiumSecondary">
+            <button onClick={() => shareToWhatsApp(ilan)}>💾 Kaydet</button>
+            <button onClick={() => shareListing(ilan)}>↗ Paylaş</button>
+            <FavoriteButton id={ilan.id} favorites={favorites} toggleFavorite={toggleFavorite} />
           </div>
         </div>
       </div>
 
+      {/* TAM EKRAN GALERİ */}
       {fullGallery && (
         <div className="fullGalleryOverlay" onTouchStart={dokunmaBasla} onTouchEnd={dokunmaBitir}>
           <div className="fullGalleryTop">
@@ -1624,7 +1617,7 @@ function ListingDetail({ ilanlar, favorites, toggleFavorite }) {
           <div className="fullGalleryThumbs">
             {fotolar.map((foto, i) => (
               <button key={i} className={aktifFoto === i ? "active" : ""} onClick={() => setAktifFoto(i)}>
-                <img src={foto} alt={`Fotoğraf ${i + 1}`} />
+                <img src={foto} alt={`${i + 1}`} />
               </button>
             ))}
           </div>
@@ -5570,349 +5563,329 @@ margin: 28px auto 0;
       .contactError { color: #ff6b6b; font-size: 14px; margin: 0; }
 
       /* ===== PREMIUM DETAIL PAGE ===== */
-      .detailHero {
-        position: relative;
-        width: 100%;
-        height: 92vh;
-        min-height: 520px;
-        background-size: cover;
-        background-position: center top;
-        background-repeat: no-repeat;
+      .premiumDetail {
+        display: grid;
+        grid-template-columns: 1fr 480px;
+        min-height: calc(100vh - 80px);
+        margin-top: 80px;
+      }
+
+      /* GALERİ - SOL */
+      .premiumGallery {
+        position: sticky;
+        top: 80px;
+        height: calc(100vh - 80px);
         display: flex;
         flex-direction: column;
-        justify-content: flex-end;
+        background: #0a0a0a;
         overflow: hidden;
-        image-rendering: auto;
       }
-      .detailHeroOverlay {
-        position: absolute;
-        inset: 0;
-        background: linear-gradient(to bottom, rgba(0,0,0,0.05) 0%, rgba(0,0,0,0.15) 35%, rgba(0,0,0,0.7) 65%, rgba(0,0,0,0.92) 100%);
+
+      .premiumMainImg {
+        position: relative;
+        flex: 1;
+        overflow: hidden;
+        cursor: zoom-in;
       }
-      .detailHeroBack {
+
+      .premiumMainImg img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        object-position: center;
+        transition: transform 0.4s ease;
+        display: block;
+      }
+
+      .premiumMainImg:hover img { transform: scale(1.02); }
+
+      .premiumFullBtn {
         position: absolute;
-        top: 90px;
-        left: 24px;
-        z-index: 10;
-        background: rgba(0,0,0,0.55);
-        backdrop-filter: blur(16px);
-        border: 1px solid rgba(255,255,255,.18);
+        bottom: 16px;
+        right: 16px;
+        background: rgba(0,0,0,0.7);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255,255,255,.2);
         color: white;
+        padding: 8px 16px;
         border-radius: 999px;
-        padding: 9px 18px;
-        font-size: 14px;
+        font-size: 13px;
         font-weight: 700;
         cursor: pointer;
         transition: background .2s;
       }
-      .detailHeroBack:hover { background: rgba(255,138,0,0.8); }
-      .detailHeroInfo {
-        position: relative;
-        z-index: 10;
-        padding: 0 40px 20px;
-        max-width: 800px;
-      }
-      .detailHeroBadges { display: flex; gap: 8px; margin-bottom: 12px; }
-      .detailHeroBadge {
-        padding: 5px 14px;
-        border-radius: 999px;
-        font-size: 13px;
-        font-weight: 800;
-        background: rgba(255,255,255,.15);
-        backdrop-filter: blur(8px);
-        border: 1px solid rgba(255,255,255,.25);
-        color: white;
-      }
-      .detailHeroBadge.status { background: var(--orange); border-color: var(--orange); }
-      .detailHeroTitle {
-        font-size: clamp(20px, 3vw, 36px);
-        font-weight: 800;
-        color: white;
-        margin: 0 0 8px;
-        text-shadow: 0 2px 24px rgba(0,0,0,0.8), 0 1px 4px rgba(0,0,0,0.6);
-        line-height: 1.25;
-        text-transform: none;
-        letter-spacing: -0.3px;
-      }
-      .detailHeroLocation { color: rgba(255,255,255,.8); margin: 0 0 6px; font-size: 15px; }
-      .detailHeroPrice {
-        font-size: clamp(22px, 3vw, 36px);
-        font-weight: 950;
-        color: var(--orange);
-        margin: 0;
-        text-shadow: 0 2px 16px rgba(0,0,0,0.6);
-      }
-      .detailHeroActions {
-        position: relative;
-        z-index: 10;
-        display: flex;
-        gap: 8px;
-        padding: 12px 40px 28px;
-        flex-wrap: wrap;
-      }
-      .detailHeroBtn {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        padding: 12px 20px;
-        border-radius: 999px;
-        font-weight: 800;
-        font-size: 14px;
-        cursor: pointer;
-        border: none;
-        transition: transform .2s, box-shadow .2s;
-      }
-      .detailHeroBtn:hover { transform: translateY(-2px); }
-      .detailHeroBtn.wa { background: #25D366; color: white; box-shadow: 0 4px 20px rgba(37,211,102,.4); }
-      .detailHeroBtn.share { background: rgba(255,255,255,.15); backdrop-filter: blur(8px); color: white; border: 1px solid rgba(255,255,255,.25); }
-      .detailHeroBtn.gallery { background: rgba(0,0,0,.4); backdrop-filter: blur(8px); color: white; border: 1px solid rgba(255,255,255,.2); }
-      .detailHeroArrow {
+      .premiumFullBtn:hover { background: rgba(255,138,0,.8); }
+
+      .premiumArrow {
         position: absolute;
         top: 50%;
         transform: translateY(-50%);
-        z-index: 10;
-        background: rgba(0,0,0,.45);
+        background: rgba(0,0,0,.5);
         backdrop-filter: blur(8px);
-        border: 1px solid rgba(255,255,255,.2);
+        border: 1px solid rgba(255,255,255,.15);
         color: white;
-        width: 48px;
-        height: 48px;
+        width: 44px;
+        height: 44px;
         border-radius: 50%;
-        font-size: 24px;
+        font-size: 22px;
         cursor: pointer;
         display: flex;
         align-items: center;
         justify-content: center;
         transition: background .2s;
+        z-index: 5;
       }
-      .detailHeroArrow.left { left: 20px; }
-      .detailHeroArrow.right { right: 20px; }
-      .detailHeroArrow:hover { background: rgba(255,138,0,.7); }
-      .detailHeroDots {
-        position: absolute;
-        bottom: 100px;
-        left: 50%;
-        transform: translateX(-50%);
-        display: flex;
-        gap: 6px;
-        z-index: 10;
-      }
-      .heroDot {
-        width: 8px; height: 8px;
-        border-radius: 50%;
-        background: rgba(255,255,255,.4);
-        border: none;
-        cursor: pointer;
-        transition: background .2s, transform .2s;
-        padding: 0;
-      }
-      .heroDot.active { background: var(--orange); transform: scale(1.3); }
+      .premiumArrow.left { left: 14px; }
+      .premiumArrow.right { right: 14px; }
+      .premiumArrow:hover { background: rgba(255,138,0,.8); }
 
-      .detailThumbStrip {
-        display: flex;
-        gap: 6px;
-        padding: 10px 28px;
-        overflow-x: auto;
-        background: rgba(5,5,5,0.95);
-        border-bottom: 1px solid rgba(255,255,255,.08);
-        scrollbar-width: none;
+      .premiumImgCounter {
+        position: absolute;
+        top: 16px;
+        left: 16px;
+        background: rgba(0,0,0,.6);
+        backdrop-filter: blur(8px);
+        color: white;
+        padding: 5px 12px;
+        border-radius: 999px;
+        font-size: 13px;
+        font-weight: 700;
+        border: 1px solid rgba(255,255,255,.15);
       }
-      .detailThumbStrip::-webkit-scrollbar { display: none; }
-      .detailThumbItem {
+
+      .premiumThumbs {
+        display: flex;
+        gap: 4px;
+        padding: 8px;
+        background: #080808;
+        overflow-x: auto;
+        scrollbar-width: none;
         flex-shrink: 0;
-        width: 90px;
-        height: 64px;
-        border-radius: 10px;
+        max-height: 88px;
+      }
+      .premiumThumbs::-webkit-scrollbar { display: none; }
+
+      .premiumThumb {
+        flex-shrink: 0;
+        width: 112px;
+        height: 72px;
+        border-radius: 8px;
         overflow: hidden;
         border: 2px solid transparent;
         cursor: pointer;
-        transition: border-color .2s, transform .2s;
+        transition: border-color .2s, opacity .2s;
         padding: 0;
         background: none;
+        opacity: 0.6;
       }
-      .detailThumbItem img { width: 100%; height: 100%; object-fit: cover; }
-      .detailThumbItem.active { border-color: var(--orange); transform: scale(1.05); }
+      .premiumThumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+      .premiumThumb.active { border-color: var(--orange); opacity: 1; }
+      .premiumThumb:hover { opacity: 0.9; }
 
-      .detailContent {
-        display: grid;
-        grid-template-columns: 1fr 360px;
-        gap: 32px;
-        max-width: 1200px;
-        margin: 40px auto;
-        padding: 0 28px 60px;
-        align-items: start;
-      }
-
-      .detailTabs {
+      /* BİLGİ - SAĞ */
+      .premiumInfo {
+        height: calc(100vh - 80px);
+        overflow-y: auto;
+        padding: 28px 28px 40px;
         display: flex;
-        gap: 4px;
-        background: rgba(255,255,255,.05);
-        border: 1px solid rgba(255,255,255,.1);
-        border-radius: 16px;
-        padding: 6px;
-        margin-bottom: 24px;
-        flex-wrap: wrap;
+        flex-direction: column;
+        gap: 18px;
+        border-left: 1px solid rgba(255,255,255,.07);
+        scrollbar-width: thin;
+        scrollbar-color: rgba(255,138,0,.3) transparent;
       }
-      .detailTab {
-        flex: 1;
-        padding: 12px 16px;
+
+      .premiumBack {
+        align-self: flex-start;
+        background: rgba(255,255,255,.06);
+        border: 1px solid rgba(255,255,255,.12);
+        color: rgba(255,255,255,.8);
+        border-radius: 999px;
+        padding: 8px 18px;
+        font-size: 13px;
+        font-weight: 700;
+        cursor: pointer;
+        transition: background .2s, color .2s;
+      }
+      .premiumBack:hover { background: rgba(255,138,0,.15); color: var(--orange); border-color: rgba(255,138,0,.3); }
+
+      .premiumBadges { display: flex; gap: 6px; flex-wrap: wrap; }
+      .premiumBadge {
+        padding: 4px 12px;
+        border-radius: 999px;
+        font-size: 12px;
+        font-weight: 800;
+        letter-spacing: .3px;
+      }
+      .premiumBadge.orange { background: var(--orange); color: #050505; }
+      .premiumBadge.dark { background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.15); color: rgba(255,255,255,.8); }
+
+      .premiumTitle {
+        font-size: clamp(18px, 2.2vw, 26px);
+        font-weight: 800;
+        color: white;
+        margin: 0;
+        line-height: 1.3;
+        text-transform: none;
+        letter-spacing: -0.3px;
+      }
+
+      .premiumLocation { color: rgba(255,255,255,.55); font-size: 14px; margin: 0; }
+
+      .premiumPrice {
+        font-size: clamp(24px, 3vw, 36px);
+        font-weight: 950;
+        color: var(--orange);
+        margin: 0;
+        letter-spacing: -0.5px;
+      }
+
+      .premiumQuickStats {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 8px;
+        padding: 16px 0;
+        border-top: 1px solid rgba(255,255,255,.07);
+        border-bottom: 1px solid rgba(255,255,255,.07);
+      }
+      .premiumQuickStats > div {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 4px;
+        text-align: center;
+      }
+      .premiumQuickStats span { font-size: 20px; }
+      .premiumQuickStats p { margin: 0; font-size: 12px; color: rgba(255,255,255,.7); font-weight: 700; }
+
+      .premiumTabs {
+        display: flex;
+        gap: 2px;
+        background: rgba(255,255,255,.04);
+        border: 1px solid rgba(255,255,255,.08);
         border-radius: 12px;
+        padding: 4px;
+      }
+      .premiumTab {
+        flex: 1;
+        padding: 10px 8px;
+        border-radius: 9px;
         border: none;
         background: transparent;
-        color: rgba(255,255,255,.6);
+        color: rgba(255,255,255,.5);
         font-weight: 700;
-        font-size: 14px;
+        font-size: 13px;
         cursor: pointer;
         transition: background .2s, color .2s;
         white-space: nowrap;
       }
-      .detailTab.active {
-        background: var(--orange);
-        color: #050505;
-      }
-      .detailTab:hover:not(.active) { background: rgba(255,255,255,.08); color: white; }
+      .premiumTab.active { background: var(--orange); color: #050505; }
+      .premiumTab:hover:not(.active) { background: rgba(255,255,255,.07); color: white; }
 
-      .detailTabContent { min-height: 200px; }
-      .detailTabPane { animation: tabFadeIn 0.3s ease; }
-      @keyframes tabFadeIn {
-        from { opacity: 0; transform: translateY(8px); }
-        to { opacity: 1; transform: translateY(0); }
-      }
+      .premiumTabContent { flex: 1; min-height: 120px; }
+      .premiumTabPane { animation: tabFadeIn 0.3s ease; }
 
-      .detailDesc {
-        color: rgba(255,255,255,.85);
-        font-size: 16px;
+      .premiumDesc {
+        color: rgba(255,255,255,.8);
+        font-size: 14px;
         line-height: 1.8;
         white-space: pre-line;
+        margin: 0;
       }
-      .detailMapLink {
+
+      .premiumMapLink {
         display: inline-flex;
         align-items: center;
-        gap: 8px;
-        margin-top: 20px;
-        padding: 12px 22px;
-        background: rgba(255,255,255,.07);
-        border: 1px solid rgba(255,255,255,.14);
+        gap: 6px;
+        margin-top: 14px;
+        padding: 10px 18px;
+        background: rgba(255,255,255,.06);
+        border: 1px solid rgba(255,255,255,.12);
         border-radius: 999px;
         color: white;
         text-decoration: none;
         font-weight: 700;
+        font-size: 13px;
         transition: background .2s;
       }
-      .detailMapLink:hover { background: rgba(255,138,0,.15); border-color: rgba(255,138,0,.4); }
+      .premiumMapLink:hover { background: rgba(255,138,0,.15); border-color: rgba(255,138,0,.3); }
 
-      .detailFeatureGrid2 {
-        display: grid;
-        grid-template-columns: repeat(2, 1fr);
-        gap: 12px;
-      }
-      .detailFeature2 {
-        display: flex;
-        align-items: center;
-        gap: 14px;
-        background: rgba(255,255,255,.05);
-        border: 1px solid rgba(255,255,255,.1);
-        border-radius: 16px;
-        padding: 16px 18px;
-        transition: border-color .2s;
-      }
-      .detailFeature2:hover { border-color: rgba(255,138,0,.3); }
-      .featureIcon2 { font-size: 22px; }
-      .featureLabel2 { font-size: 12px; color: rgba(255,255,255,.5); margin: 0; text-transform: uppercase; letter-spacing: .5px; font-weight: 700; }
-      .featureValue2 { font-size: 16px; color: white; margin: 4px 0 0; font-weight: 800; }
-
-      .yatirimBox {
-        display: flex;
-        gap: 16px;
-        background: rgba(255,138,0,.08);
-        border: 1px solid rgba(255,138,0,.2);
-        border-radius: 20px;
-        padding: 24px;
-        margin-bottom: 20px;
-      }
-      .yatirimIcon { font-size: 28px; flex-shrink: 0; }
-      .yatirimBox p { color: rgba(255,255,255,.85); line-height: 1.7; margin: 0; font-size: 15px; }
-      .trustStrip2 {
-        display: grid;
-        grid-template-columns: repeat(3, 1fr);
-        gap: 12px;
-      }
-      .trustStrip2 > div {
-        background: rgba(255,255,255,.05);
-        border: 1px solid rgba(255,255,255,.1);
-        border-radius: 14px;
-        padding: 16px;
-        text-align: center;
-      }
-      .trustStrip2 strong { display: block; color: var(--orange); font-size: 16px; font-weight: 800; }
-      .trustStrip2 span { font-size: 12px; color: rgba(255,255,255,.55); }
-
-      .detailSidebar { position: sticky; top: 100px; }
-      .detailSideCard {
-        background: rgba(255,255,255,.05);
-        border: 1px solid rgba(255,255,255,.12);
-        border-radius: 24px;
-        padding: 28px;
-        display: flex;
-        flex-direction: column;
-        gap: 12px;
-      }
-      .sideCardPrice { font-size: 28px; font-weight: 950; color: var(--orange); margin: 0; }
-      .sideCardTitle { font-size: 16px; font-weight: 800; color: white; margin: 0; line-height: 1.3; }
-      .sideCardLocation { font-size: 13px; color: rgba(255,255,255,.55); margin: 0; }
-      .sideCardFeatures {
+      .premiumFeatureGrid {
         display: grid;
         grid-template-columns: 1fr 1fr;
         gap: 8px;
-        padding: 12px 0;
-        border-top: 1px solid rgba(255,255,255,.08);
-        border-bottom: 1px solid rgba(255,255,255,.08);
       }
-      .sideCardFeatures > div { display: flex; align-items: center; gap: 8px; }
-      .sideCardFeatures span { font-size: 16px; }
-      .sideCardFeatures p { margin: 0; font-size: 13px; color: rgba(255,255,255,.8); font-weight: 700; }
-      .sideCardWa {
-        display: flex; align-items: center; gap: 8px; justify-content: center;
+      .premiumFeature {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        background: rgba(255,255,255,.04);
+        border: 1px solid rgba(255,255,255,.08);
+        border-radius: 12px;
+        padding: 12px 14px;
+      }
+      .premiumFeature span { font-size: 18px; flex-shrink: 0; }
+      .premiumFeature div p { margin: 0; font-size: 11px; color: rgba(255,255,255,.45); font-weight: 700; text-transform: uppercase; letter-spacing: .5px; }
+      .premiumFeature div strong { font-size: 14px; color: white; font-weight: 800; }
+
+      .premiumYatirim {
+        display: flex;
+        gap: 14px;
+        background: rgba(255,138,0,.07);
+        border: 1px solid rgba(255,138,0,.18);
+        border-radius: 16px;
+        padding: 20px;
+      }
+      .premiumYatirim span { font-size: 24px; flex-shrink: 0; }
+      .premiumYatirim p { margin: 0; color: rgba(255,255,255,.82); font-size: 14px; line-height: 1.7; }
+
+      .premiumCTA {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+      .premiumCtaWa {
+        display: flex; align-items: center; justify-content: center; gap: 8px;
         background: #25D366; color: white; text-decoration: none;
-        padding: 14px; border-radius: 14px; font-weight: 800; font-size: 15px;
+        padding: 15px; border-radius: 14px; font-weight: 800; font-size: 15px;
         transition: transform .2s, box-shadow .2s;
       }
-      .sideCardWa:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(37,211,102,.4); }
-      .sideCardInsta {
-        display: flex; align-items: center; gap: 8px; justify-content: center;
+      .premiumCtaWa:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(37,211,102,.4); }
+      .premiumCtaInsta {
+        display: flex; align-items: center; justify-content: center; gap: 8px;
         background: linear-gradient(135deg, #833ab4, #fd1d1d, #fcb045);
         color: white; text-decoration: none;
-        padding: 12px; border-radius: 14px; font-weight: 800; font-size: 14px;
+        padding: 13px; border-radius: 14px; font-weight: 800; font-size: 14px;
         transition: transform .2s;
       }
-      .sideCardInsta:hover { transform: translateY(-2px); }
-      .sideCardMap {
-        display: flex; align-items: center; gap: 8px; justify-content: center;
-        background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.14);
-        color: white; text-decoration: none;
-        padding: 12px; border-radius: 14px; font-weight: 700; font-size: 14px;
+      .premiumCtaInsta:hover { transform: translateY(-2px); }
+
+      .premiumSecondary {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+      .premiumSecondary button {
+        flex: 1;
+        background: rgba(255,255,255,.05);
+        border: 1px solid rgba(255,255,255,.1);
+        color: rgba(255,255,255,.75);
+        border-radius: 12px;
+        padding: 11px 10px;
+        font-size: 13px;
+        font-weight: 700;
+        cursor: pointer;
         transition: background .2s;
+        white-space: nowrap;
       }
-      .sideCardMap:hover { background: rgba(255,255,255,.12); }
-      .sideCardShare {
-        display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
-      }
-      .sideCardShare button {
-        background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.12);
-        color: rgba(255,255,255,.8); border-radius: 12px; padding: 10px;
-        font-size: 13px; font-weight: 700; cursor: pointer; transition: background .2s;
-      }
-      .sideCardShare button:hover { background: rgba(255,255,255,.12); }
+      .premiumSecondary button:hover { background: rgba(255,255,255,.1); color: white; }
 
       @media (max-width: 900px) {
-        .detailContent { grid-template-columns: 1fr; padding: 0 16px 40px; }
-        .detailSidebar { position: static; }
-        .detailHeroInfo { padding: 0 20px 16px; }
-        .detailHeroActions { padding: 12px 20px 24px; }
-        .detailThumbStrip { padding: 10px 16px; }
-        .detailFeatureGrid2 { grid-template-columns: 1fr; }
-        .trustStrip2 { grid-template-columns: 1fr; }
-        .detailHero { height: 70vh; }
+        .premiumDetail { grid-template-columns: 1fr; margin-top: 72px; }
+        .premiumGallery { position: relative; top: 0; height: 55vw; min-height: 280px; max-height: 480px; }
+        .premiumInfo { height: auto; overflow-y: visible; padding: 20px 16px 32px; }
+        .premiumQuickStats { grid-template-columns: repeat(2, 1fr); }
+        .premiumFeatureGrid { grid-template-columns: 1fr; }
       }
 
       /* ===== SPLASH SCREEN ===== */
