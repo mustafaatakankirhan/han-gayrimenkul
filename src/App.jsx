@@ -1093,7 +1093,7 @@ function ListingCard({ ilan, admin, ilanDuzenle, ilanSil, favorites, toggleFavor
           </a>
         )}
 
-        <button className="saveWaBtn" onClick={() => shareToWhatsApp(ilan)} title="Bu ilanı WhatsApp'a kaydet">
+        <button className="saveWaBtn" onClick={() => shareToWhatsApp(ilan)} title="Bu ilanı WhatsApp'a kaydet" style={{display:"none"}}>
           💾 Kaydet
         </button>
 
@@ -1582,7 +1582,6 @@ function ListingDetail({ ilanlar, favorites, toggleFavorite }) {
           </div>
 
           <div className="pdSecRow">
-            <button onClick={() => shareToWhatsApp(ilan)}>&#128190; Kaydet</button>
             <button onClick={() => shareListing(ilan)}>&#8599; Paylaş</button>
             <FavoriteButton id={ilan.id} favorites={favorites} toggleFavorite={toggleFavorite} />
           </div>
