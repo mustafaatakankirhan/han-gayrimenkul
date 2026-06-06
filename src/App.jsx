@@ -1446,7 +1446,6 @@ function ListingDetail({ ilanlar, favorites, toggleFavorite }) {
 
   const fotolar = fotoListesi(ilan);
   const current = fotolar[aktifFoto] || ilkFoto(ilan);
-
   const oncekiFoto = () => { if (fotolar.length < 2) return; setAktifFoto((p) => (p === 0 ? fotolar.length - 1 : p - 1)); };
   const sonrakiFoto = () => { if (fotolar.length < 2) return; setAktifFoto((p) => (p === fotolar.length - 1 ? 0 : p + 1)); };
   const dokunmaBasla = (e) => { touchStartX.current = e.touches[0].clientX; };
@@ -1464,102 +1463,130 @@ function ListingDetail({ ilanlar, favorites, toggleFavorite }) {
   const sekmeler = [
     { id: "aciklama", label: "Açıklama" },
     { id: "ozellikler", label: "Özellikler" },
-    { id: "yatirim", label: "Yatırım" },
-    ...(ilan.videoUrl ? [{ id: "video", label: "Video" }] : []),
+    { id: "yatirim", label: "Yatırım Notu" },
+    ...(ilan.videoUrl ? [{ id: "video", label: "Video Tur" }] : []),
   ];
 
-  const toTitleCase = (str) => str ? str.toLowerCase().replace(/\w/g, c => c.toUpperCase()) : str;
+  const toTitleCase = (str) => {
+    if (!str) return str;
+    return str.toLowerCase().split(" ").map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(" ");
+  };
 
   return (
-    <div className="page detailPage" style={{ opacity: mounted ? 1 : 0, transition: "opacity 0.6s ease" }}>
+    <div className="page detailPage" style={{ opacity: mounted ? 1 : 0, transition: "opacity 0.5s ease" }}>
       <SEO title={seoTitle} description={seoDescription} image={current || DEFAULT_SEO_IMAGE} url={detailUrl} type="article" />
       <Header detail />
 
-      {/* SPLIT LAYOUT: Sol galeri, Sağ bilgi */}
-      <div className="premiumDetail">
-
-        {/* SOL — GALERİ */}
-        <div className="premiumGallery">
-          <div
-            className="premiumMainImg"
-            onTouchStart={dokunmaBasla}
-            onTouchEnd={dokunmaBitir}
-            onClick={() => setFullGallery(true)}
-          >
-            <img src={current} alt={ilan.title} />
-            <button className="premiumFullBtn" onClick={(e) => { e.stopPropagation(); setFullGallery(true); }}>
-              ⛶ {fotolar.length} Fotoğraf
-            </button>
-            {fotolar.length > 1 && (
-              <>
-                <button className="premiumArrow left" onClick={(e) => { e.stopPropagation(); oncekiFoto(); }}>‹</button>
-                <button className="premiumArrow right" onClick={(e) => { e.stopPropagation(); sonrakiFoto(); }}>›</button>
-              </>
-            )}
-            <div className="premiumImgCounter">{aktifFoto + 1} / {fotolar.length}</div>
-          </div>
-
-          {fotolar.length > 1 && (
-            <div className="premiumThumbs">
-              {fotolar.map((foto, i) => (
-                <button
-                  key={i}
-                  className={`premiumThumb ${i === aktifFoto ? "active" : ""}`}
-                  onClick={() => setAktifFoto(i)}
-                >
-                  <img src={foto} alt={`${i + 1}`} />
-                </button>
-              ))}
-            </div>
-          )}
+      {/* HERO - TAM GENİŞ FOTOĞRAF */}
+      <div className="pdHero" onTouchStart={dokunmaBasla} onTouchEnd={dokunmaBitir}>
+        <div className="pdHeroImgWrap" onClick={() => setFullGallery(true)}>
+          <img src={current} alt={ilan.title} className="pdHeroImg" key={aktifFoto} />
+          <div className="pdHeroImgOverlay" />
         </div>
 
-        {/* SAĞ — BİLGİ */}
-        <div className="premiumInfo">
-          <button className="premiumBack" onClick={goListings}>← Geri Dön</button>
+        <button className="pdBackBtn" onClick={goListings}>← İlanlara Dön</button>
 
-          <div className="premiumBadges">
-            {ilan.status && <span className="premiumBadge orange">{ilan.status}</span>}
-            {ilan.type && <span className="premiumBadge dark">{ilan.type}</span>}
-            <span className="premiumBadge dark">Güncel Portföy</span>
+        {fotolar.length > 1 && (
+          <>
+            <button className="pdArrow left" onClick={(e) => { e.stopPropagation(); oncekiFoto(); }}>‹</button>
+            <button className="pdArrow right" onClick={(e) => { e.stopPropagation(); sonrakiFoto(); }}>›</button>
+          </>
+        )}
+
+        <div className="pdHeroBottom">
+          <div className="pdHeroBadges">
+            {ilan.status && <span className="pdBadge orange">{ilan.status}</span>}
+            {ilan.type && <span className="pdBadge white">{ilan.type}</span>}
+          </div>
+          <button className="pdGalleryBtn" onClick={() => setFullGallery(true)}>
+            🖼 {fotolar.length} Fotoğraf
+          </button>
+        </div>
+
+        <div className="pdHeroDots">
+          {fotolar.slice(0, 10).map((_, i) => (
+            <button key={i} className={`pdDot ${i === aktifFoto ? "active" : ""}`} onClick={() => setAktifFoto(i)} />
+          ))}
+        </div>
+      </div>
+
+      {/* THUMBNAIL ŞERİDİ */}
+      {fotolar.length > 1 && (
+        <div className="pdThumbs">
+          {fotolar.map((foto, i) => (
+            <button key={i} className={`pdThumb ${i === aktifFoto ? "active" : ""}`} onClick={() => setAktifFoto(i)}>
+              <img src={foto} alt={`${i + 1}`} />
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* ANA İÇERİK: sol geniş + sağ sticky kart */}
+      <div className="pdBody">
+
+        {/* SOL — Detay bilgileri */}
+        <div className="pdLeft">
+
+          {/* Başlık Bloğu */}
+          <div className="pdTitleBlock">
+            <h1 className="pdTitle">{toTitleCase(ilan.title)}</h1>
+            <p className="pdLocation">📍 {ilan.location}</p>
+            <p className="pdPrice">{ilan.price}</p>
           </div>
 
-          <h1 className="premiumTitle">{toTitleCase(ilan.title)}</h1>
-          <p className="premiumLocation">📍 {ilan.location}</p>
-          <p className="premiumPrice">{ilan.price}</p>
-
-          <div className="premiumQuickStats">
-            {ilan.rooms && <div><span>🛏</span><p>{ilan.rooms} Oda</p></div>}
-            {ilan.area && <div><span>📐</span><p>{ilan.area} m²</p></div>}
-            {ilan.status && <div><span>🏷</span><p>{ilan.status}</p></div>}
-            {ilan.type && <div><span>🏠</span><p>{ilan.type}</p></div>}
+          {/* Hızlı Özellikler */}
+          <div className="pdQuickFacts">
+            {ilan.rooms && (
+              <div className="pdFact">
+                <span>🛏</span>
+                <div><p>Oda Sayısı</p><strong>{ilan.rooms}</strong></div>
+              </div>
+            )}
+            {ilan.area && (
+              <div className="pdFact">
+                <span>📐</span>
+                <div><p>Alan</p><strong>{ilan.area} m²</strong></div>
+              </div>
+            )}
+            {ilan.type && (
+              <div className="pdFact">
+                <span>🏠</span>
+                <div><p>Tür</p><strong>{ilan.type}</strong></div>
+              </div>
+            )}
+            {ilan.status && (
+              <div className="pdFact">
+                <span>🏷</span>
+                <div><p>Durum</p><strong>{ilan.status}</strong></div>
+              </div>
+            )}
           </div>
 
           {/* SEKMELER */}
-          <div className="premiumTabs">
+          <div className="pdTabs">
             {sekmeler.map(s => (
-              <button key={s.id} className={`premiumTab ${aktifSekme === s.id ? "active" : ""}`} onClick={() => setAktifSekme(s.id)}>
+              <button key={s.id} className={`pdTab ${aktifSekme === s.id ? "active" : ""}`} onClick={() => setAktifSekme(s.id)}>
                 {s.label}
               </button>
             ))}
           </div>
 
-          <div className="premiumTabContent">
+          <div className="pdTabContent">
             {aktifSekme === "aciklama" && (
-              <div className="premiumTabPane">
-                <p className="premiumDesc">{ilan.description || "Bu ilan hakkında detaylı bilgi almak için bizimle iletişime geçebilirsiniz."}</p>
+              <div className="pdTabPane">
+                <p className="pdDesc">{ilan.description || "Bu ilan hakkında detaylı bilgi almak için bizimle iletişime geçebilirsiniz."}</p>
                 {ilan.maps && (
-                  <a href={ilan.maps} target="_blank" rel="noreferrer" className="premiumMapLink">
-                    🗺 Haritada Görüntüle
+                  <a href={ilan.maps} target="_blank" rel="noreferrer" className="pdMapLink">
+                    🗺 Google Maps'te Görüntüle
                   </a>
                 )}
               </div>
             )}
             {aktifSekme === "ozellikler" && (
-              <div className="premiumTabPane">
-                <div className="premiumFeatureGrid">
+              <div className="pdTabPane">
+                <div className="pdFeatureGrid">
                   {buildFeatureList(ilan).map((item, i) => (
-                    <div className="premiumFeature" key={i}>
+                    <div className="pdFeature" key={i}>
                       <span>{item.icon}</span>
                       <div>
                         <p>{item.label}</p>
@@ -1571,34 +1598,56 @@ function ListingDetail({ ilanlar, favorites, toggleFavorite }) {
               </div>
             )}
             {aktifSekme === "yatirim" && (
-              <div className="premiumTabPane">
-                <div className="premiumYatirim">
+              <div className="pdTabPane">
+                <div className="pdYatirim">
                   <span>💡</span>
                   <p>{shortPropertyNote(ilan)}</p>
+                </div>
+                <div className="pdTrustGrid">
+                  <div><strong>Şeffaf</strong><span>Bilgi paylaşımı</span></div>
+                  <div><strong>Hızlı</strong><span>WhatsApp dönüşü</span></div>
+                  <div><strong>Yerel</strong><span>Karasu uzmanlığı</span></div>
                 </div>
               </div>
             )}
             {aktifSekme === "video" && ilan.videoUrl && (
-              <div className="premiumTabPane">
-                <video src={ilan.videoUrl} controls playsInline preload="metadata" style={{ width: "100%", borderRadius: 14, maxHeight: 280 }} />
+              <div className="pdTabPane">
+                <video src={ilan.videoUrl} controls playsInline preload="metadata" style={{ width: "100%", borderRadius: 16, maxHeight: 420 }} />
               </div>
             )}
           </div>
+        </div>
 
-          {/* CTA BUTONLAR */}
-          <div className="premiumCTA">
-            <a href={whatsappLink(ilan)} target="_blank" rel="noreferrer" className="premiumCtaWa">
+        {/* SAĞ — Sticky iletişim kartı */}
+        <div className="pdRight">
+          <div className="pdSideCard">
+            <p className="pdSidePrice">{ilan.price}</p>
+            <p className="pdSideTitle">{toTitleCase(ilan.title)}</p>
+            <p className="pdSideLocation">📍 {ilan.location}</p>
+
+            <div className="pdSideFacts">
+              {ilan.rooms && <div><span>🛏</span><p>{ilan.rooms}</p></div>}
+              {ilan.area && <div><span>📐</span><p>{ilan.area} m²</p></div>}
+              {ilan.type && <div><span>🏠</span><p>{ilan.type}</p></div>}
+              {ilan.status && <div><span>🏷</span><p>{ilan.status}</p></div>}
+            </div>
+
+            <a href={whatsappLink(ilan)} target="_blank" rel="noreferrer" className="pdSideWa">
               <img src={ICONS.whatsapp} alt="" style={{width:20,height:20}} /> WhatsApp ile Bilgi Al
             </a>
-            <a href={ilan.instagram || CONTACTS.instagram} target="_blank" rel="noreferrer" className="premiumCtaInsta">
-              <LogoIcon type="instagram" /> Instagram
+            <a href={ilan.instagram || CONTACTS.instagram} target="_blank" rel="noreferrer" className="pdSideInsta">
+              <LogoIcon type="instagram" /> Instagram'da Görüntüle
             </a>
-          </div>
-
-          <div className="premiumSecondary">
-            <button onClick={() => shareToWhatsApp(ilan)}>💾 Kaydet</button>
-            <button onClick={() => shareListing(ilan)}>↗ Paylaş</button>
-            <FavoriteButton id={ilan.id} favorites={favorites} toggleFavorite={toggleFavorite} />
+            {ilan.maps && (
+              <a href={ilan.maps} target="_blank" rel="noreferrer" className="pdSideMap">
+                🗺 Haritada Aç
+              </a>
+            )}
+            <div className="pdSideActions">
+              <button onClick={() => shareToWhatsApp(ilan)}>💾 Kaydet</button>
+              <button onClick={() => shareListing(ilan)}>↗ Paylaş</button>
+              <FavoriteButton id={ilan.id} favorites={favorites} toggleFavorite={toggleFavorite} />
+            </div>
           </div>
         </div>
       </div>
@@ -1617,7 +1666,7 @@ function ListingDetail({ ilanlar, favorites, toggleFavorite }) {
           <div className="fullGalleryThumbs">
             {fotolar.map((foto, i) => (
               <button key={i} className={aktifFoto === i ? "active" : ""} onClick={() => setAktifFoto(i)}>
-                <img src={foto} alt={`${i + 1}`} />
+                <img src={foto} alt={`Fotoğraf ${i + 1}`} />
               </button>
             ))}
           </div>
@@ -1630,13 +1679,6 @@ function ListingDetail({ ilanlar, favorites, toggleFavorite }) {
   );
 }
 
-function BenzerIlanlar({ ilan, ilanlar, favorites, toggleFavorite }) {
-  const ref = React.useRef(null);
-  const [visible, setVisible] = useState(false);
-
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      ([entry]) => { if (entry.isIntersecting) { setVisible(true); observer.disconnect(); } },
       { threshold: 0.05 }
     );
     if (ref.current) observer.observe(ref.current);
@@ -5563,329 +5605,305 @@ margin: 28px auto 0;
       .contactError { color: #ff6b6b; font-size: 14px; margin: 0; }
 
       /* ===== PREMIUM DETAIL PAGE ===== */
-      .premiumDetail {
-        display: grid;
-        grid-template-columns: 1fr 480px;
-        min-height: calc(100vh - 80px);
-        margin-top: 80px;
-      }
 
-      /* GALERİ - SOL */
-      .premiumGallery {
-        position: sticky;
-        top: 80px;
-        height: calc(100vh - 80px);
-        display: flex;
-        flex-direction: column;
-        background: #0a0a0a;
-        overflow: hidden;
-      }
-
-      .premiumMainImg {
+      .pdHero {
         position: relative;
-        flex: 1;
+        width: 100%;
+        height: 72vh;
+        min-height: 440px;
+        max-height: 700px;
+        margin-top: 80px;
         overflow: hidden;
-        cursor: zoom-in;
+        cursor: pointer;
+        background: #0a0a0a;
       }
-
-      .premiumMainImg img {
+      .pdHeroImgWrap { width: 100%; height: 100%; position: relative; }
+      .pdHeroImg {
         width: 100%;
         height: 100%;
         object-fit: cover;
         object-position: center;
-        transition: transform 0.4s ease;
         display: block;
+        animation: pdImgFade 0.35s ease;
       }
-
-      .premiumMainImg:hover img { transform: scale(1.02); }
-
-      .premiumFullBtn {
+      @keyframes pdImgFade {
+        from { opacity: 0.6; transform: scale(1.03); }
+        to { opacity: 1; transform: scale(1); }
+      }
+      .pdHeroImgOverlay {
         position: absolute;
-        bottom: 16px;
-        right: 16px;
-        background: rgba(0,0,0,0.7);
-        backdrop-filter: blur(10px);
-        border: 1px solid rgba(255,255,255,.2);
+        inset: 0;
+        background: linear-gradient(to bottom, rgba(0,0,0,0.25) 0%, rgba(0,0,0,0) 40%, rgba(0,0,0,0.6) 100%);
+      }
+      .pdBackBtn {
+        position: absolute;
+        top: 20px;
+        left: 24px;
+        z-index: 20;
+        background: rgba(0,0,0,0.55);
+        backdrop-filter: blur(12px);
+        border: 1px solid rgba(255,255,255,.18);
         color: white;
-        padding: 8px 16px;
         border-radius: 999px;
+        padding: 9px 20px;
         font-size: 13px;
         font-weight: 700;
         cursor: pointer;
         transition: background .2s;
       }
-      .premiumFullBtn:hover { background: rgba(255,138,0,.8); }
-
-      .premiumArrow {
+      .pdBackBtn:hover { background: var(--orange); border-color: var(--orange); }
+      .pdArrow {
         position: absolute;
         top: 50%;
         transform: translateY(-50%);
-        background: rgba(0,0,0,.5);
+        z-index: 20;
+        background: rgba(0,0,0,0.5);
         backdrop-filter: blur(8px);
         border: 1px solid rgba(255,255,255,.15);
         color: white;
-        width: 44px;
-        height: 44px;
+        width: 50px;
+        height: 50px;
         border-radius: 50%;
-        font-size: 22px;
+        font-size: 26px;
         cursor: pointer;
         display: flex;
         align-items: center;
         justify-content: center;
         transition: background .2s;
-        z-index: 5;
       }
-      .premiumArrow.left { left: 14px; }
-      .premiumArrow.right { right: 14px; }
-      .premiumArrow:hover { background: rgba(255,138,0,.8); }
-
-      .premiumImgCounter {
+      .pdArrow.left { left: 20px; }
+      .pdArrow.right { right: 20px; }
+      .pdArrow:hover { background: rgba(255,138,0,.85); }
+      .pdHeroBottom {
         position: absolute;
-        top: 16px;
-        left: 16px;
+        bottom: 20px;
+        left: 24px;
+        right: 24px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        z-index: 20;
+      }
+      .pdHeroBadges { display: flex; gap: 8px; }
+      .pdBadge {
+        padding: 5px 14px;
+        border-radius: 999px;
+        font-size: 12px;
+        font-weight: 800;
+      }
+      .pdBadge.orange { background: var(--orange); color: #050505; }
+      .pdBadge.white { background: rgba(255,255,255,.18); backdrop-filter: blur(8px); color: white; border: 1px solid rgba(255,255,255,.25); }
+      .pdGalleryBtn {
         background: rgba(0,0,0,.6);
-        backdrop-filter: blur(8px);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255,255,255,.2);
         color: white;
-        padding: 5px 12px;
+        padding: 8px 18px;
         border-radius: 999px;
         font-size: 13px;
         font-weight: 700;
-        border: 1px solid rgba(255,255,255,.15);
+        cursor: pointer;
+        transition: background .2s;
       }
-
-      .premiumThumbs {
+      .pdGalleryBtn:hover { background: rgba(255,138,0,.8); }
+      .pdHeroDots {
+        position: absolute;
+        bottom: 58px;
+        left: 50%;
+        transform: translateX(-50%);
         display: flex;
-        gap: 4px;
-        padding: 8px;
-        background: #080808;
-        overflow-x: auto;
-        scrollbar-width: none;
-        flex-shrink: 0;
-        max-height: 88px;
+        gap: 6px;
+        z-index: 20;
       }
-      .premiumThumbs::-webkit-scrollbar { display: none; }
+      .pdDot {
+        width: 7px; height: 7px;
+        border-radius: 50%;
+        background: rgba(255,255,255,.4);
+        border: none; cursor: pointer;
+        transition: background .2s, transform .2s;
+        padding: 0;
+      }
+      .pdDot.active { background: var(--orange); transform: scale(1.4); }
 
-      .premiumThumb {
+      .pdThumbs {
+        display: flex;
+        gap: 6px;
+        padding: 10px 24px;
+        overflow-x: auto;
+        background: #080808;
+        border-bottom: 1px solid rgba(255,255,255,.06);
+        scrollbar-width: none;
+      }
+      .pdThumbs::-webkit-scrollbar { display: none; }
+      .pdThumb {
         flex-shrink: 0;
-        width: 112px;
-        height: 72px;
+        width: 100px; height: 68px;
         border-radius: 8px;
         overflow: hidden;
         border: 2px solid transparent;
         cursor: pointer;
-        transition: border-color .2s, opacity .2s;
-        padding: 0;
-        background: none;
-        opacity: 0.6;
+        padding: 0; background: none;
+        opacity: 0.55;
+        transition: opacity .2s, border-color .2s;
       }
-      .premiumThumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
-      .premiumThumb.active { border-color: var(--orange); opacity: 1; }
-      .premiumThumb:hover { opacity: 0.9; }
+      .pdThumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+      .pdThumb.active { border-color: var(--orange); opacity: 1; }
+      .pdThumb:hover { opacity: 0.85; }
 
-      /* BİLGİ - SAĞ */
-      .premiumInfo {
-        height: calc(100vh - 80px);
-        overflow-y: auto;
-        padding: 28px 28px 40px;
-        display: flex;
-        flex-direction: column;
-        gap: 18px;
-        border-left: 1px solid rgba(255,255,255,.07);
-        scrollbar-width: thin;
-        scrollbar-color: rgba(255,138,0,.3) transparent;
+      .pdBody {
+        max-width: 1280px;
+        margin: 0 auto;
+        padding: 40px 32px 80px;
+        display: grid;
+        grid-template-columns: 1fr 380px;
+        gap: 40px;
+        align-items: start;
       }
 
-      .premiumBack {
-        align-self: flex-start;
-        background: rgba(255,255,255,.06);
-        border: 1px solid rgba(255,255,255,.12);
-        color: rgba(255,255,255,.8);
-        border-radius: 999px;
-        padding: 8px 18px;
-        font-size: 13px;
-        font-weight: 700;
-        cursor: pointer;
-        transition: background .2s, color .2s;
-      }
-      .premiumBack:hover { background: rgba(255,138,0,.15); color: var(--orange); border-color: rgba(255,138,0,.3); }
-
-      .premiumBadges { display: flex; gap: 6px; flex-wrap: wrap; }
-      .premiumBadge {
-        padding: 4px 12px;
-        border-radius: 999px;
-        font-size: 12px;
-        font-weight: 800;
-        letter-spacing: .3px;
-      }
-      .premiumBadge.orange { background: var(--orange); color: #050505; }
-      .premiumBadge.dark { background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.15); color: rgba(255,255,255,.8); }
-
-      .premiumTitle {
-        font-size: clamp(18px, 2.2vw, 26px);
+      .pdTitleBlock { margin-bottom: 4px; }
+      .pdTitle {
+        font-size: clamp(22px, 2.5vw, 32px);
         font-weight: 800;
         color: white;
-        margin: 0;
-        line-height: 1.3;
+        margin: 0 0 8px;
+        line-height: 1.25;
+        letter-spacing: -0.4px;
         text-transform: none;
-        letter-spacing: -0.3px;
       }
+      .pdLocation { color: rgba(255,255,255,.5); font-size: 14px; margin: 0 0 10px; }
+      .pdPrice { font-size: clamp(26px, 3vw, 40px); font-weight: 950; color: var(--orange); margin: 0; letter-spacing: -0.5px; }
 
-      .premiumLocation { color: rgba(255,255,255,.55); font-size: 14px; margin: 0; }
-
-      .premiumPrice {
-        font-size: clamp(24px, 3vw, 36px);
-        font-weight: 950;
-        color: var(--orange);
-        margin: 0;
-        letter-spacing: -0.5px;
-      }
-
-      .premiumQuickStats {
+      .pdQuickFacts {
         display: grid;
         grid-template-columns: repeat(4, 1fr);
-        gap: 8px;
-        padding: 16px 0;
-        border-top: 1px solid rgba(255,255,255,.07);
-        border-bottom: 1px solid rgba(255,255,255,.07);
-      }
-      .premiumQuickStats > div {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 4px;
-        text-align: center;
-      }
-      .premiumQuickStats span { font-size: 20px; }
-      .premiumQuickStats p { margin: 0; font-size: 12px; color: rgba(255,255,255,.7); font-weight: 700; }
-
-      .premiumTabs {
-        display: flex;
-        gap: 2px;
-        background: rgba(255,255,255,.04);
-        border: 1px solid rgba(255,255,255,.08);
-        border-radius: 12px;
-        padding: 4px;
-      }
-      .premiumTab {
-        flex: 1;
-        padding: 10px 8px;
-        border-radius: 9px;
-        border: none;
-        background: transparent;
-        color: rgba(255,255,255,.5);
-        font-weight: 700;
-        font-size: 13px;
-        cursor: pointer;
-        transition: background .2s, color .2s;
-        white-space: nowrap;
-      }
-      .premiumTab.active { background: var(--orange); color: #050505; }
-      .premiumTab:hover:not(.active) { background: rgba(255,255,255,.07); color: white; }
-
-      .premiumTabContent { flex: 1; min-height: 120px; }
-      .premiumTabPane { animation: tabFadeIn 0.3s ease; }
-
-      .premiumDesc {
-        color: rgba(255,255,255,.8);
-        font-size: 14px;
-        line-height: 1.8;
-        white-space: pre-line;
-        margin: 0;
-      }
-
-      .premiumMapLink {
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
-        margin-top: 14px;
-        padding: 10px 18px;
-        background: rgba(255,255,255,.06);
-        border: 1px solid rgba(255,255,255,.12);
-        border-radius: 999px;
-        color: white;
-        text-decoration: none;
-        font-weight: 700;
-        font-size: 13px;
-        transition: background .2s;
-      }
-      .premiumMapLink:hover { background: rgba(255,138,0,.15); border-color: rgba(255,138,0,.3); }
-
-      .premiumFeatureGrid {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 8px;
-      }
-      .premiumFeature {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        background: rgba(255,255,255,.04);
-        border: 1px solid rgba(255,255,255,.08);
-        border-radius: 12px;
-        padding: 12px 14px;
-      }
-      .premiumFeature span { font-size: 18px; flex-shrink: 0; }
-      .premiumFeature div p { margin: 0; font-size: 11px; color: rgba(255,255,255,.45); font-weight: 700; text-transform: uppercase; letter-spacing: .5px; }
-      .premiumFeature div strong { font-size: 14px; color: white; font-weight: 800; }
-
-      .premiumYatirim {
-        display: flex;
-        gap: 14px;
-        background: rgba(255,138,0,.07);
-        border: 1px solid rgba(255,138,0,.18);
-        border-radius: 16px;
+        gap: 12px;
+        margin: 24px 0;
         padding: 20px;
+        background: rgba(255,255,255,.03);
+        border: 1px solid rgba(255,255,255,.08);
+        border-radius: 20px;
       }
-      .premiumYatirim span { font-size: 24px; flex-shrink: 0; }
-      .premiumYatirim p { margin: 0; color: rgba(255,255,255,.82); font-size: 14px; line-height: 1.7; }
+      .pdFact { display: flex; align-items: center; gap: 10px; }
+      .pdFact > span { font-size: 22px; }
+      .pdFact div p { margin: 0 0 2px; font-size: 11px; color: rgba(255,255,255,.4); text-transform: uppercase; letter-spacing: .5px; font-weight: 700; }
+      .pdFact div strong { font-size: 15px; color: white; font-weight: 800; }
 
-      .premiumCTA {
+      .pdTabs {
+        display: flex;
+        gap: 0;
+        border-bottom: 2px solid rgba(255,255,255,.08);
+        margin-bottom: 24px;
+      }
+      .pdTab {
+        padding: 12px 22px;
+        border: none; background: transparent;
+        color: rgba(255,255,255,.45);
+        font-weight: 700; font-size: 14px;
+        cursor: pointer;
+        border-bottom: 2px solid transparent;
+        margin-bottom: -2px;
+        transition: color .2s, border-color .2s;
+      }
+      .pdTab.active { color: var(--orange); border-bottom-color: var(--orange); }
+      .pdTab:hover:not(.active) { color: rgba(255,255,255,.8); }
+
+      .pdTabContent { min-height: 160px; }
+      .pdTabPane { animation: tabFadeIn 0.3s ease; }
+
+      .pdDesc { color: rgba(255,255,255,.8); font-size: 15px; line-height: 1.85; white-space: pre-line; margin: 0; }
+      .pdMapLink {
+        display: inline-flex; align-items: center; gap: 6px;
+        margin-top: 20px; padding: 11px 20px;
+        background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.12);
+        border-radius: 999px; color: white; text-decoration: none;
+        font-weight: 700; font-size: 13px; transition: background .2s;
+      }
+      .pdMapLink:hover { background: rgba(255,138,0,.12); border-color: rgba(255,138,0,.3); }
+
+      .pdFeatureGrid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+      .pdFeature {
+        display: flex; align-items: center; gap: 12px;
+        background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.08);
+        border-radius: 14px; padding: 14px 16px; transition: border-color .2s;
+      }
+      .pdFeature:hover { border-color: rgba(255,138,0,.25); }
+      .pdFeature > span { font-size: 20px; flex-shrink: 0; }
+      .pdFeature div p { margin: 0 0 3px; font-size: 11px; color: rgba(255,255,255,.4); text-transform: uppercase; letter-spacing: .5px; font-weight: 700; }
+      .pdFeature div strong { font-size: 15px; color: white; font-weight: 800; }
+
+      .pdYatirim {
+        display: flex; gap: 16px;
+        background: rgba(255,138,0,.07); border: 1px solid rgba(255,138,0,.16);
+        border-radius: 18px; padding: 22px; margin-bottom: 20px;
+      }
+      .pdYatirim > span { font-size: 26px; flex-shrink: 0; }
+      .pdYatirim p { margin: 0; color: rgba(255,255,255,.82); font-size: 14px; line-height: 1.75; }
+
+      .pdTrustGrid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+      .pdTrustGrid > div {
+        background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.08);
+        border-radius: 14px; padding: 16px; text-align: center;
+      }
+      .pdTrustGrid strong { display: block; color: var(--orange); font-size: 15px; font-weight: 800; margin-bottom: 4px; }
+      .pdTrustGrid span { font-size: 12px; color: rgba(255,255,255,.5); }
+
+      .pdRight { position: sticky; top: 100px; }
+      .pdSideCard {
+        background: rgba(255,255,255,.04);
+        border: 1px solid rgba(255,255,255,.1);
+        border-radius: 24px;
+        padding: 28px;
         display: flex;
         flex-direction: column;
-        gap: 10px;
+        gap: 14px;
       }
-      .premiumCtaWa {
+      .pdSidePrice { font-size: 30px; font-weight: 950; color: var(--orange); margin: 0; letter-spacing: -0.5px; }
+      .pdSideTitle { font-size: 15px; font-weight: 800; color: white; margin: 0; line-height: 1.35; }
+      .pdSideLocation { font-size: 13px; color: rgba(255,255,255,.45); margin: 0; }
+      .pdSideFacts {
+        display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
+        padding: 14px 0; border-top: 1px solid rgba(255,255,255,.07); border-bottom: 1px solid rgba(255,255,255,.07);
+      }
+      .pdSideFacts > div { display: flex; align-items: center; gap: 7px; }
+      .pdSideFacts span { font-size: 16px; }
+      .pdSideFacts p { margin: 0; font-size: 13px; color: rgba(255,255,255,.75); font-weight: 700; }
+      .pdSideWa {
         display: flex; align-items: center; justify-content: center; gap: 8px;
         background: #25D366; color: white; text-decoration: none;
         padding: 15px; border-radius: 14px; font-weight: 800; font-size: 15px;
         transition: transform .2s, box-shadow .2s;
       }
-      .premiumCtaWa:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(37,211,102,.4); }
-      .premiumCtaInsta {
+      .pdSideWa:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(37,211,102,.4); }
+      .pdSideInsta {
         display: flex; align-items: center; justify-content: center; gap: 8px;
         background: linear-gradient(135deg, #833ab4, #fd1d1d, #fcb045);
         color: white; text-decoration: none;
         padding: 13px; border-radius: 14px; font-weight: 800; font-size: 14px;
         transition: transform .2s;
       }
-      .premiumCtaInsta:hover { transform: translateY(-2px); }
-
-      .premiumSecondary {
-        display: flex;
-        gap: 8px;
-        flex-wrap: wrap;
+      .pdSideInsta:hover { transform: translateY(-2px); }
+      .pdSideMap {
+        display: flex; align-items: center; justify-content: center; gap: 8px;
+        background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.12);
+        color: white; text-decoration: none;
+        padding: 12px; border-radius: 14px; font-weight: 700; font-size: 13px; transition: background .2s;
       }
-      .premiumSecondary button {
-        flex: 1;
-        background: rgba(255,255,255,.05);
-        border: 1px solid rgba(255,255,255,.1);
-        color: rgba(255,255,255,.75);
-        border-radius: 12px;
-        padding: 11px 10px;
-        font-size: 13px;
-        font-weight: 700;
-        cursor: pointer;
-        transition: background .2s;
-        white-space: nowrap;
+      .pdSideMap:hover { background: rgba(255,255,255,.1); }
+      .pdSideActions { display: flex; gap: 8px; }
+      .pdSideActions button {
+        flex: 1; background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.1);
+        color: rgba(255,255,255,.7); border-radius: 12px; padding: 11px 8px;
+        font-size: 12px; font-weight: 700; cursor: pointer; transition: background .2s;
       }
-      .premiumSecondary button:hover { background: rgba(255,255,255,.1); color: white; }
+      .pdSideActions button:hover { background: rgba(255,255,255,.1); color: white; }
 
       @media (max-width: 900px) {
-        .premiumDetail { grid-template-columns: 1fr; margin-top: 72px; }
-        .premiumGallery { position: relative; top: 0; height: 55vw; min-height: 280px; max-height: 480px; }
-        .premiumInfo { height: auto; overflow-y: visible; padding: 20px 16px 32px; }
-        .premiumQuickStats { grid-template-columns: repeat(2, 1fr); }
-        .premiumFeatureGrid { grid-template-columns: 1fr; }
+        .pdHero { height: 56vw; min-height: 240px; max-height: 420px; margin-top: 72px; }
+        .pdBody { grid-template-columns: 1fr; padding: 24px 16px 60px; gap: 24px; }
+        .pdRight { position: static; }
+        .pdQuickFacts { grid-template-columns: repeat(2, 1fr); }
+        .pdFeatureGrid { grid-template-columns: 1fr; }
+        .pdTrustGrid { grid-template-columns: 1fr; }
       }
 
       /* ===== SPLASH SCREEN ===== */
