@@ -1417,9 +1417,7 @@ function ListingDetail({ ilanlar, favorites, toggleFavorite }) {
   }, [ilanlar, slug]);
 
   useEffect(() => {
-    setAktifFoto(0);
-    setZoomed(false);
-    setAktifSekme("aciklama");
+    setAktifFoto(0); setZoomed(false); setAktifSekme("aciklama");
     window.scrollTo(0, 0);
     setMounted(false);
     setTimeout(() => setMounted(true), 80);
@@ -1430,6 +1428,11 @@ function ListingDetail({ ilanlar, favorites, toggleFavorite }) {
   const goListings = () => {
     navigate("/?scroll=ilanlar");
     setTimeout(() => { document.getElementById("ilanlar")?.scrollIntoView({ behavior: "smooth" }); }, 50);
+  };
+
+  const toTitleCase = (str) => {
+    if (!str) return str;
+    return str.toLowerCase().split(" ").map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(" ");
   };
 
   if (!ilan) {
@@ -1458,215 +1461,148 @@ function ListingDetail({ ilanlar, favorites, toggleFavorite }) {
 
   const detailUrl = `${SITE_URL}/ilan/${ilanSlug(ilan)}`;
   const seoTitle = `${ilan.title} | ${ilan.location || "Karasu"} | Han Gayrimenkul`;
-  const seoDescription = `${ilan.price || ""} ${ilan.status || ""} ${ilan.type || "gayrimenkul"} - ${ilan.location || "Sakarya Karasu"}. Detaylı bilgi ve randevu için Han Gayrimenkul ile iletişime geçin.`;
+  const seoDescription = `${ilan.price || ""} ${ilan.status || ""} ${ilan.type || "gayrimenkul"} - ${ilan.location || "Sakarya Karasu"}.`;
 
   const sekmeler = [
     { id: "aciklama", label: "Açıklama" },
     { id: "ozellikler", label: "Özellikler" },
-    { id: "yatirim", label: "Yatırım Notu" },
-    ...(ilan.videoUrl ? [{ id: "video", label: "Video Tur" }] : []),
+    { id: "yatirim", label: "Yatırım" },
+    ...(ilan.videoUrl ? [{ id: "video", label: "Video" }] : []),
   ];
-
-  const toTitleCase = (str) => {
-    if (!str) return str;
-    return str.toLowerCase().split(" ").map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(" ");
-  };
 
   return (
     <div className="page detailPage" style={{ opacity: mounted ? 1 : 0, transition: "opacity 0.5s ease" }}>
       <SEO title={seoTitle} description={seoDescription} image={current || DEFAULT_SEO_IMAGE} url={detailUrl} type="article" />
       <Header detail />
 
-      {/* HERO - TAM GENİŞ FOTOĞRAF */}
-      <div className="pdHero" onTouchStart={dokunmaBasla} onTouchEnd={dokunmaBitir}>
-        <div className="pdHeroImgWrap" onClick={() => setFullGallery(true)}>
-          <img src={current} alt={ilan.title} className="pdHeroImg" key={aktifFoto} />
-          <div className="pdHeroImgOverlay" />
-        </div>
-
-        <button className="pdBackBtn" onClick={goListings}>← İlanlara Dön</button>
-
-        {fotolar.length > 1 && (
-          <>
-            <button className="pdArrow left" onClick={(e) => { e.stopPropagation(); oncekiFoto(); }}>‹</button>
-            <button className="pdArrow right" onClick={(e) => { e.stopPropagation(); sonrakiFoto(); }}>›</button>
-          </>
-        )}
-
-        <div className="pdHeroBottom">
-          <div className="pdHeroBadges">
-            {ilan.status && <span className="pdBadge orange">{ilan.status}</span>}
-            {ilan.type && <span className="pdBadge white">{ilan.type}</span>}
-          </div>
-          <button className="pdGalleryBtn" onClick={() => setFullGallery(true)}>
-            🖼 {fotolar.length} Fotoğraf
-          </button>
-        </div>
-
-        <div className="pdHeroDots">
-          {fotolar.slice(0, 10).map((_, i) => (
-            <button key={i} className={`pdDot ${i === aktifFoto ? "active" : ""}`} onClick={() => setAktifFoto(i)} />
-          ))}
-        </div>
-      </div>
-
-      {/* THUMBNAIL ŞERİDİ */}
-      {fotolar.length > 1 && (
-        <div className="pdThumbs">
-          {fotolar.map((foto, i) => (
-            <button key={i} className={`pdThumb ${i === aktifFoto ? "active" : ""}`} onClick={() => setAktifFoto(i)}>
-              <img src={foto} alt={`${i + 1}`} />
-            </button>
-          ))}
-        </div>
-      )}
-
-      {/* ANA İÇERİK: sol geniş + sağ sticky kart */}
-      <div className="pdBody">
-
-        {/* SOL — Detay bilgileri */}
-        <div className="pdLeft">
-
-          {/* Başlık Bloğu */}
-          <div className="pdTitleBlock">
-            <h1 className="pdTitle">{toTitleCase(ilan.title)}</h1>
-            <p className="pdLocation">📍 {ilan.location}</p>
-            <p className="pdPrice">{ilan.price}</p>
+      <div className="pdWrap">
+        {/* SOL — FOTO KOLONU */}
+        <div className="pdPhotoCol">
+          <div className="pdMainPhoto" onTouchStart={dokunmaBasla} onTouchEnd={dokunmaBitir} onClick={() => setFullGallery(true)}>
+            <img src={current} alt={ilan.title} key={aktifFoto} />
+            <div className="pdPhotoOverlay" />
+            {fotolar.length > 1 && (
+              <>
+                <button className="pdArr left" onClick={(e) => { e.stopPropagation(); oncekiFoto(); }}>&#8249;</button>
+                <button className="pdArr right" onClick={(e) => { e.stopPropagation(); sonrakiFoto(); }}>&#8250;</button>
+              </>
+            )}
+            <div className="pdPhotoMeta">
+              <span className="pdPhotoCount">{aktifFoto + 1} / {fotolar.length}</span>
+              <button className="pdPhotoFull" onClick={(e) => { e.stopPropagation(); setFullGallery(true); }}>&#9974; Galeri</button>
+            </div>
           </div>
 
-          {/* Hızlı Özellikler */}
-          <div className="pdQuickFacts">
-            {ilan.rooms && (
-              <div className="pdFact">
-                <span>🛏</span>
-                <div><p>Oda Sayısı</p><strong>{ilan.rooms}</strong></div>
-              </div>
-            )}
-            {ilan.area && (
-              <div className="pdFact">
-                <span>📐</span>
-                <div><p>Alan</p><strong>{ilan.area} m²</strong></div>
-              </div>
-            )}
-            {ilan.type && (
-              <div className="pdFact">
-                <span>🏠</span>
-                <div><p>Tür</p><strong>{ilan.type}</strong></div>
-              </div>
-            )}
-            {ilan.status && (
-              <div className="pdFact">
-                <span>🏷</span>
-                <div><p>Durum</p><strong>{ilan.status}</strong></div>
-              </div>
-            )}
+          {fotolar.length > 1 && (
+            <div className="pdPhotoGrid">
+              {fotolar.slice(0, 6).map((foto, i) => (
+                <button key={i} className={`pdPhotoGridItem ${i === aktifFoto ? "active" : ""}`} onClick={() => setAktifFoto(i)}>
+                  <img src={foto} alt={`${i + 1}`} />
+                  {i === 5 && fotolar.length > 6 && (
+                    <div className="pdMoreOverlay" onClick={(e) => { e.stopPropagation(); setFullGallery(true); }}>
+                      +{fotolar.length - 6}
+                    </div>
+                  )}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* SAĞ — BİLGİ KOLONU */}
+        <div className="pdInfoCol">
+          <button className="pdBackBtn2" onClick={goListings}>&#8592; Geri Dön</button>
+
+          <div className="pdBadgeRow">
+            {ilan.status && <span className="pdB orange">{ilan.status}</span>}
+            {ilan.type && <span className="pdB outline">{ilan.type}</span>}
           </div>
 
-          {/* SEKMELER */}
-          <div className="pdTabs">
+          <h1 className="pdH1">{toTitleCase(ilan.title)}</h1>
+          <p className="pdLoc">&#128205; {ilan.location}</p>
+          <p className="pdPriceMain">{ilan.price}</p>
+
+          <div className="pdStatRow">
+            {ilan.rooms && <div className="pdStat"><span>&#127985;</span><div><p>Oda</p><strong>{ilan.rooms}</strong></div></div>}
+            {ilan.area && <div className="pdStat"><span>&#128208;</span><div><p>Alan</p><strong>{ilan.area} m²</strong></div></div>}
+            {ilan.type && <div className="pdStat"><span>&#127968;</span><div><p>Tür</p><strong>{ilan.type}</strong></div></div>}
+            {ilan.status && <div className="pdStat"><span>&#127991;</span><div><p>Durum</p><strong>{ilan.status}</strong></div></div>}
+          </div>
+
+          <div className="pdTabBar">
             {sekmeler.map(s => (
-              <button key={s.id} className={`pdTab ${aktifSekme === s.id ? "active" : ""}`} onClick={() => setAktifSekme(s.id)}>
+              <button key={s.id} className={`pdTabBtn ${aktifSekme === s.id ? "active" : ""}`} onClick={() => setAktifSekme(s.id)}>
                 {s.label}
               </button>
             ))}
           </div>
 
-          <div className="pdTabContent">
+          <div className="pdTabBody">
             {aktifSekme === "aciklama" && (
-              <div className="pdTabPane">
-                <p className="pdDesc">{ilan.description || "Bu ilan hakkında detaylı bilgi almak için bizimle iletişime geçebilirsiniz."}</p>
-                {ilan.maps && (
-                  <a href={ilan.maps} target="_blank" rel="noreferrer" className="pdMapLink">
-                    🗺 Google Maps'te Görüntüle
-                  </a>
-                )}
+              <div className="pdPane">
+                <p className="pdDescText">{ilan.description || "Detaylı bilgi için bizimle iletişime geçebilirsiniz."}</p>
+                {ilan.maps && <a href={ilan.maps} target="_blank" rel="noreferrer" className="pdMapA">&#128506; Haritada Görüntüle</a>}
               </div>
             )}
             {aktifSekme === "ozellikler" && (
-              <div className="pdTabPane">
-                <div className="pdFeatureGrid">
+              <div className="pdPane">
+                <div className="pdFeatGrid">
                   {buildFeatureList(ilan).map((item, i) => (
-                    <div className="pdFeature" key={i}>
+                    <div className="pdFeatItem" key={i}>
                       <span>{item.icon}</span>
-                      <div>
-                        <p>{item.label}</p>
-                        <strong>{item.value}</strong>
-                      </div>
+                      <div><p>{item.label}</p><strong>{item.value}</strong></div>
                     </div>
                   ))}
                 </div>
               </div>
             )}
             {aktifSekme === "yatirim" && (
-              <div className="pdTabPane">
-                <div className="pdYatirim">
-                  <span>💡</span>
+              <div className="pdPane">
+                <div className="pdYatirimBox">
+                  <span>&#128161;</span>
                   <p>{shortPropertyNote(ilan)}</p>
-                </div>
-                <div className="pdTrustGrid">
-                  <div><strong>Şeffaf</strong><span>Bilgi paylaşımı</span></div>
-                  <div><strong>Hızlı</strong><span>WhatsApp dönüşü</span></div>
-                  <div><strong>Yerel</strong><span>Karasu uzmanlığı</span></div>
                 </div>
               </div>
             )}
             {aktifSekme === "video" && ilan.videoUrl && (
-              <div className="pdTabPane">
-                <video src={ilan.videoUrl} controls playsInline preload="metadata" style={{ width: "100%", borderRadius: 16, maxHeight: 420 }} />
+              <div className="pdPane">
+                <video src={ilan.videoUrl} controls playsInline preload="metadata" style={{ width: "100%", borderRadius: 12 }} />
               </div>
             )}
           </div>
-        </div>
 
-        {/* SAĞ — Sticky iletişim kartı */}
-        <div className="pdRight">
-          <div className="pdSideCard">
-            <p className="pdSidePrice">{ilan.price}</p>
-            <p className="pdSideTitle">{toTitleCase(ilan.title)}</p>
-            <p className="pdSideLocation">📍 {ilan.location}</p>
-
-            <div className="pdSideFacts">
-              {ilan.rooms && <div><span>🛏</span><p>{ilan.rooms}</p></div>}
-              {ilan.area && <div><span>📐</span><p>{ilan.area} m²</p></div>}
-              {ilan.type && <div><span>🏠</span><p>{ilan.type}</p></div>}
-              {ilan.status && <div><span>🏷</span><p>{ilan.status}</p></div>}
-            </div>
-
-            <a href={whatsappLink(ilan)} target="_blank" rel="noreferrer" className="pdSideWa">
+          <div className="pdCTAStack">
+            <a href={whatsappLink(ilan)} target="_blank" rel="noreferrer" className="pdCtaWa">
               <img src={ICONS.whatsapp} alt="" style={{width:20,height:20}} /> WhatsApp ile Bilgi Al
             </a>
-            <a href={ilan.instagram || CONTACTS.instagram} target="_blank" rel="noreferrer" className="pdSideInsta">
-              <LogoIcon type="instagram" /> Instagram'da Görüntüle
+            <a href={ilan.instagram || CONTACTS.instagram} target="_blank" rel="noreferrer" className="pdCtaInsta">
+              <LogoIcon type="instagram" /> Instagram'da İncele
             </a>
-            {ilan.maps && (
-              <a href={ilan.maps} target="_blank" rel="noreferrer" className="pdSideMap">
-                🗺 Haritada Aç
-              </a>
-            )}
-            <div className="pdSideActions">
-              <button onClick={() => shareToWhatsApp(ilan)}>💾 Kaydet</button>
-              <button onClick={() => shareListing(ilan)}>↗ Paylaş</button>
-              <FavoriteButton id={ilan.id} favorites={favorites} toggleFavorite={toggleFavorite} />
-            </div>
+            {ilan.maps && <a href={ilan.maps} target="_blank" rel="noreferrer" className="pdCtaMap">&#128506; Haritada Aç</a>}
+          </div>
+
+          <div className="pdSecRow">
+            <button onClick={() => shareToWhatsApp(ilan)}>&#128190; Kaydet</button>
+            <button onClick={() => shareListing(ilan)}>&#8599; Paylaş</button>
+            <FavoriteButton id={ilan.id} favorites={favorites} toggleFavorite={toggleFavorite} />
           </div>
         </div>
       </div>
 
-      {/* TAM EKRAN GALERİ */}
       {fullGallery && (
         <div className="fullGalleryOverlay" onTouchStart={dokunmaBasla} onTouchEnd={dokunmaBitir}>
           <div className="fullGalleryTop">
-            <button onClick={() => setFullGallery(false)}>✕ Kapat</button>
+            <button onClick={() => setFullGallery(false)}>&#10005; Kapat</button>
             <span>{aktifFoto + 1} / {fotolar.length || 1}</span>
             <button onClick={() => setZoomed((v) => !v)}>{zoomed ? "Uzaklaştır" : "Yakınlaştır"}</button>
           </div>
-          <button className="fullArrow left" onClick={oncekiFoto}>‹</button>
+          <button className="fullArrow left" onClick={oncekiFoto}>&#8249;</button>
           <img src={current} alt={ilan.title} className={`fullGalleryImage ${zoomed ? "zoomed" : ""}`} onClick={() => setZoomed((v) => !v)} />
-          <button className="fullArrow right" onClick={sonrakiFoto}>›</button>
+          <button className="fullArrow right" onClick={sonrakiFoto}>&#8250;</button>
           <div className="fullGalleryThumbs">
             {fotolar.map((foto, i) => (
               <button key={i} className={aktifFoto === i ? "active" : ""} onClick={() => setAktifFoto(i)}>
-                <img src={foto} alt={`Fotoğraf ${i + 1}`} />
+                <img src={foto} alt={`${i + 1}`} />
               </button>
             ))}
           </div>
@@ -1679,6 +1615,13 @@ function ListingDetail({ ilanlar, favorites, toggleFavorite }) {
   );
 }
 
+function BenzerIlanlar({ ilan, ilanlar, favorites, toggleFavorite }) {
+  const ref = React.useRef(null);
+  const [visible, setVisible] = useState(false);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => { if (entry.isIntersecting) { setVisible(true); observer.disconnect(); } },
       { threshold: 0.05 }
     );
     if (ref.current) observer.observe(ref.current);
@@ -1686,11 +1629,9 @@ function ListingDetail({ ilanlar, favorites, toggleFavorite }) {
   }, []);
 
   const benzerler = useMemo(() => {
-    // Önce aynı türde ara, sonra aynı statüde, en az biri yeterli
     const ayniTur = ilanlar.filter(x => x.id !== ilan.id && x.type === ilan.type);
     const ayniStatus = ilanlar.filter(x => x.id !== ilan.id && x.status === ilan.status && x.type !== ilan.type);
     const combined = [...ayniTur, ...ayniStatus];
-    // Eğer yine de boşsa tüm diğer ilanları al
     const fallback = ilanlar.filter(x => x.id !== ilan.id);
     return (combined.length > 0 ? combined : fallback).slice(0, 3);
   }, [ilan, ilanlar]);
@@ -1707,20 +1648,13 @@ function ListingDetail({ ilanlar, favorites, toggleFavorite }) {
       <h2 className="sectionTitle">Bunlara da bakın</h2>
       <div className="cards" style={{ maxWidth: 1100, margin: "0 auto" }}>
         {benzerler.map(b => (
-          <ListingCard
-            key={b.id}
-            ilan={b}
-            admin={false}
-            ilanDuzenle={() => {}}
-            ilanSil={() => {}}
-            favorites={favorites}
-            toggleFavorite={toggleFavorite}
-          />
+          <ListingCard key={b.id} ilan={b} admin={false} ilanDuzenle={() => {}} ilanSil={() => {}} favorites={favorites} toggleFavorite={toggleFavorite} />
         ))}
       </div>
     </section>
   );
 }
+
 
 function BlogListPage({ blogs }) {
   const publishedBlogs = useMemo(
@@ -5606,304 +5540,250 @@ margin: 28px auto 0;
 
       /* ===== PREMIUM DETAIL PAGE ===== */
 
-      .pdHero {
-        position: relative;
-        width: 100%;
-        height: 72vh;
-        min-height: 440px;
-        max-height: 700px;
-        margin-top: 80px;
-        overflow: hidden;
-        cursor: pointer;
-        background: #0a0a0a;
-      }
-      .pdHeroImgWrap { width: 100%; height: 100%; position: relative; }
-      .pdHeroImg {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-        object-position: center;
-        display: block;
-        animation: pdImgFade 0.35s ease;
-      }
-      @keyframes pdImgFade {
-        from { opacity: 0.6; transform: scale(1.03); }
-        to { opacity: 1; transform: scale(1); }
-      }
-      .pdHeroImgOverlay {
-        position: absolute;
-        inset: 0;
-        background: linear-gradient(to bottom, rgba(0,0,0,0.25) 0%, rgba(0,0,0,0) 40%, rgba(0,0,0,0.6) 100%);
-      }
-      .pdBackBtn {
-        position: absolute;
-        top: 20px;
-        left: 24px;
-        z-index: 20;
-        background: rgba(0,0,0,0.55);
-        backdrop-filter: blur(12px);
-        border: 1px solid rgba(255,255,255,.18);
-        color: white;
-        border-radius: 999px;
-        padding: 9px 20px;
-        font-size: 13px;
-        font-weight: 700;
-        cursor: pointer;
-        transition: background .2s;
-      }
-      .pdBackBtn:hover { background: var(--orange); border-color: var(--orange); }
-      .pdArrow {
-        position: absolute;
-        top: 50%;
-        transform: translateY(-50%);
-        z-index: 20;
-        background: rgba(0,0,0,0.5);
-        backdrop-filter: blur(8px);
-        border: 1px solid rgba(255,255,255,.15);
-        color: white;
-        width: 50px;
-        height: 50px;
-        border-radius: 50%;
-        font-size: 26px;
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        transition: background .2s;
-      }
-      .pdArrow.left { left: 20px; }
-      .pdArrow.right { right: 20px; }
-      .pdArrow:hover { background: rgba(255,138,0,.85); }
-      .pdHeroBottom {
-        position: absolute;
-        bottom: 20px;
-        left: 24px;
-        right: 24px;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        z-index: 20;
-      }
-      .pdHeroBadges { display: flex; gap: 8px; }
-      .pdBadge {
-        padding: 5px 14px;
-        border-radius: 999px;
-        font-size: 12px;
-        font-weight: 800;
-      }
-      .pdBadge.orange { background: var(--orange); color: #050505; }
-      .pdBadge.white { background: rgba(255,255,255,.18); backdrop-filter: blur(8px); color: white; border: 1px solid rgba(255,255,255,.25); }
-      .pdGalleryBtn {
-        background: rgba(0,0,0,.6);
-        backdrop-filter: blur(10px);
-        border: 1px solid rgba(255,255,255,.2);
-        color: white;
-        padding: 8px 18px;
-        border-radius: 999px;
-        font-size: 13px;
-        font-weight: 700;
-        cursor: pointer;
-        transition: background .2s;
-      }
-      .pdGalleryBtn:hover { background: rgba(255,138,0,.8); }
-      .pdHeroDots {
-        position: absolute;
-        bottom: 58px;
-        left: 50%;
-        transform: translateX(-50%);
-        display: flex;
-        gap: 6px;
-        z-index: 20;
-      }
-      .pdDot {
-        width: 7px; height: 7px;
-        border-radius: 50%;
-        background: rgba(255,255,255,.4);
-        border: none; cursor: pointer;
-        transition: background .2s, transform .2s;
-        padding: 0;
-      }
-      .pdDot.active { background: var(--orange); transform: scale(1.4); }
-
-      .pdThumbs {
-        display: flex;
-        gap: 6px;
-        padding: 10px 24px;
-        overflow-x: auto;
-        background: #080808;
-        border-bottom: 1px solid rgba(255,255,255,.06);
-        scrollbar-width: none;
-      }
-      .pdThumbs::-webkit-scrollbar { display: none; }
-      .pdThumb {
-        flex-shrink: 0;
-        width: 100px; height: 68px;
-        border-radius: 8px;
-        overflow: hidden;
-        border: 2px solid transparent;
-        cursor: pointer;
-        padding: 0; background: none;
-        opacity: 0.55;
-        transition: opacity .2s, border-color .2s;
-      }
-      .pdThumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
-      .pdThumb.active { border-color: var(--orange); opacity: 1; }
-      .pdThumb:hover { opacity: 0.85; }
-
-      .pdBody {
-        max-width: 1280px;
+      .pdWrap {
+        max-width: 1360px;
         margin: 0 auto;
-        padding: 40px 32px 80px;
+        padding: 100px 40px 80px;
         display: grid;
-        grid-template-columns: 1fr 380px;
-        gap: 40px;
+        grid-template-columns: 1fr 420px;
+        gap: 56px;
         align-items: start;
       }
 
-      .pdTitleBlock { margin-bottom: 4px; }
-      .pdTitle {
-        font-size: clamp(22px, 2.5vw, 32px);
-        font-weight: 800;
-        color: white;
-        margin: 0 0 8px;
-        line-height: 1.25;
-        letter-spacing: -0.4px;
-        text-transform: none;
-      }
-      .pdLocation { color: rgba(255,255,255,.5); font-size: 14px; margin: 0 0 10px; }
-      .pdPrice { font-size: clamp(26px, 3vw, 40px); font-weight: 950; color: var(--orange); margin: 0; letter-spacing: -0.5px; }
+      /* FOTO KOLONU */
+      .pdPhotoCol { display: flex; flex-direction: column; gap: 8px; }
 
-      .pdQuickFacts {
-        display: grid;
-        grid-template-columns: repeat(4, 1fr);
-        gap: 12px;
-        margin: 24px 0;
-        padding: 20px;
-        background: rgba(255,255,255,.03);
-        border: 1px solid rgba(255,255,255,.08);
+      .pdMainPhoto {
+        position: relative;
+        width: 100%;
+        aspect-ratio: 4/3;
         border-radius: 20px;
-      }
-      .pdFact { display: flex; align-items: center; gap: 10px; }
-      .pdFact > span { font-size: 22px; }
-      .pdFact div p { margin: 0 0 2px; font-size: 11px; color: rgba(255,255,255,.4); text-transform: uppercase; letter-spacing: .5px; font-weight: 700; }
-      .pdFact div strong { font-size: 15px; color: white; font-weight: 800; }
-
-      .pdTabs {
-        display: flex;
-        gap: 0;
-        border-bottom: 2px solid rgba(255,255,255,.08);
-        margin-bottom: 24px;
-      }
-      .pdTab {
-        padding: 12px 22px;
-        border: none; background: transparent;
-        color: rgba(255,255,255,.45);
-        font-weight: 700; font-size: 14px;
+        overflow: hidden;
         cursor: pointer;
-        border-bottom: 2px solid transparent;
-        margin-bottom: -2px;
-        transition: color .2s, border-color .2s;
+        background: #111;
       }
-      .pdTab.active { color: var(--orange); border-bottom-color: var(--orange); }
-      .pdTab:hover:not(.active) { color: rgba(255,255,255,.8); }
-
-      .pdTabContent { min-height: 160px; }
-      .pdTabPane { animation: tabFadeIn 0.3s ease; }
-
-      .pdDesc { color: rgba(255,255,255,.8); font-size: 15px; line-height: 1.85; white-space: pre-line; margin: 0; }
-      .pdMapLink {
-        display: inline-flex; align-items: center; gap: 6px;
-        margin-top: 20px; padding: 11px 20px;
-        background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.12);
-        border-radius: 999px; color: white; text-decoration: none;
-        font-weight: 700; font-size: 13px; transition: background .2s;
+      .pdMainPhoto img {
+        width: 100%; height: 100%;
+        object-fit: cover; object-position: center;
+        display: block;
+        transition: transform 0.4s ease;
+        animation: pdFade 0.3s ease;
       }
-      .pdMapLink:hover { background: rgba(255,138,0,.12); border-color: rgba(255,138,0,.3); }
-
-      .pdFeatureGrid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
-      .pdFeature {
-        display: flex; align-items: center; gap: 12px;
-        background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.08);
-        border-radius: 14px; padding: 14px 16px; transition: border-color .2s;
+      @keyframes pdFade {
+        from { opacity: 0.5; transform: scale(1.04); }
+        to { opacity: 1; transform: scale(1); }
       }
-      .pdFeature:hover { border-color: rgba(255,138,0,.25); }
-      .pdFeature > span { font-size: 20px; flex-shrink: 0; }
-      .pdFeature div p { margin: 0 0 3px; font-size: 11px; color: rgba(255,255,255,.4); text-transform: uppercase; letter-spacing: .5px; font-weight: 700; }
-      .pdFeature div strong { font-size: 15px; color: white; font-weight: 800; }
-
-      .pdYatirim {
-        display: flex; gap: 16px;
-        background: rgba(255,138,0,.07); border: 1px solid rgba(255,138,0,.16);
-        border-radius: 18px; padding: 22px; margin-bottom: 20px;
+      .pdMainPhoto:hover img { transform: scale(1.02); }
+      .pdPhotoOverlay {
+        position: absolute; inset: 0;
+        background: linear-gradient(to top, rgba(0,0,0,0.3) 0%, transparent 40%);
+        pointer-events: none;
       }
-      .pdYatirim > span { font-size: 26px; flex-shrink: 0; }
-      .pdYatirim p { margin: 0; color: rgba(255,255,255,.82); font-size: 14px; line-height: 1.75; }
-
-      .pdTrustGrid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
-      .pdTrustGrid > div {
-        background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.08);
-        border-radius: 14px; padding: 16px; text-align: center;
+      .pdArr {
+        position: absolute; top: 50%; transform: translateY(-50%);
+        background: rgba(255,255,255,0.92); color: #050505;
+        border: none; border-radius: 50%;
+        width: 44px; height: 44px;
+        font-size: 22px; font-weight: 900;
+        cursor: pointer; display: flex; align-items: center; justify-content: center;
+        transition: background .2s, box-shadow .2s;
+        box-shadow: 0 2px 12px rgba(0,0,0,0.25);
+        z-index: 10;
       }
-      .pdTrustGrid strong { display: block; color: var(--orange); font-size: 15px; font-weight: 800; margin-bottom: 4px; }
-      .pdTrustGrid span { font-size: 12px; color: rgba(255,255,255,.5); }
+      .pdArr.left { left: 14px; }
+      .pdArr.right { right: 14px; }
+      .pdArr:hover { background: white; box-shadow: 0 4px 20px rgba(0,0,0,0.35); }
+      .pdPhotoMeta {
+        position: absolute; bottom: 14px; left: 0; right: 0;
+        display: flex; align-items: center; justify-content: space-between;
+        padding: 0 16px; z-index: 10;
+      }
+      .pdPhotoCount {
+        background: rgba(0,0,0,0.65); backdrop-filter: blur(8px);
+        color: white; padding: 5px 12px; border-radius: 999px;
+        font-size: 13px; font-weight: 700;
+      }
+      .pdPhotoFull {
+        background: rgba(0,0,0,0.65); backdrop-filter: blur(8px);
+        border: 1px solid rgba(255,255,255,.25); color: white;
+        padding: 7px 16px; border-radius: 999px;
+        font-size: 13px; font-weight: 700; cursor: pointer;
+        transition: background .2s;
+      }
+      .pdPhotoFull:hover { background: var(--orange); border-color: var(--orange); }
 
-      .pdRight { position: sticky; top: 100px; }
-      .pdSideCard {
-        background: rgba(255,255,255,.04);
-        border: 1px solid rgba(255,255,255,.1);
-        border-radius: 24px;
-        padding: 28px;
+      .pdPhotoGrid {
+        display: grid;
+        grid-template-columns: repeat(6, 1fr);
+        gap: 6px;
+      }
+      .pdPhotoGridItem {
+        position: relative;
+        aspect-ratio: 1;
+        border-radius: 10px;
+        overflow: hidden;
+        border: 2px solid transparent;
+        cursor: pointer; padding: 0; background: #111;
+        transition: border-color .2s, opacity .2s;
+        opacity: 0.6;
+      }
+      .pdPhotoGridItem img { width: 100%; height: 100%; object-fit: cover; display: block; }
+      .pdPhotoGridItem.active { border-color: var(--orange); opacity: 1; }
+      .pdPhotoGridItem:hover { opacity: 0.9; }
+      .pdMoreOverlay {
+        position: absolute; inset: 0;
+        background: rgba(0,0,0,0.65);
+        display: flex; align-items: center; justify-content: center;
+        color: white; font-size: 18px; font-weight: 800;
+        cursor: pointer;
+      }
+
+      /* BİLGİ KOLONU */
+      .pdInfoCol {
+        position: sticky;
+        top: 100px;
         display: flex;
         flex-direction: column;
-        gap: 14px;
+        gap: 20px;
       }
-      .pdSidePrice { font-size: 30px; font-weight: 950; color: var(--orange); margin: 0; letter-spacing: -0.5px; }
-      .pdSideTitle { font-size: 15px; font-weight: 800; color: white; margin: 0; line-height: 1.35; }
-      .pdSideLocation { font-size: 13px; color: rgba(255,255,255,.45); margin: 0; }
-      .pdSideFacts {
-        display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
-        padding: 14px 0; border-top: 1px solid rgba(255,255,255,.07); border-bottom: 1px solid rgba(255,255,255,.07);
+
+      .pdBackBtn2 {
+        align-self: flex-start;
+        background: transparent;
+        border: 1px solid rgba(255,255,255,.15);
+        color: rgba(255,255,255,.65);
+        border-radius: 999px;
+        padding: 8px 18px;
+        font-size: 13px; font-weight: 700;
+        cursor: pointer;
+        transition: color .2s, border-color .2s, background .2s;
       }
-      .pdSideFacts > div { display: flex; align-items: center; gap: 7px; }
-      .pdSideFacts span { font-size: 16px; }
-      .pdSideFacts p { margin: 0; font-size: 13px; color: rgba(255,255,255,.75); font-weight: 700; }
-      .pdSideWa {
+      .pdBackBtn2:hover { color: white; border-color: rgba(255,255,255,.4); background: rgba(255,255,255,.05); }
+
+      .pdBadgeRow { display: flex; gap: 8px; }
+      .pdB {
+        padding: 4px 12px; border-radius: 999px;
+        font-size: 12px; font-weight: 800; letter-spacing: .3px;
+      }
+      .pdB.orange { background: var(--orange); color: #050505; }
+      .pdB.outline { border: 1px solid rgba(255,255,255,.2); color: rgba(255,255,255,.75); }
+
+      .pdH1 {
+        font-size: clamp(20px, 2vw, 28px);
+        font-weight: 800; color: white;
+        margin: 0; line-height: 1.3;
+        letter-spacing: -0.3px;
+      }
+      .pdLoc { color: rgba(255,255,255,.45); font-size: 13px; margin: 0; }
+      .pdPriceMain {
+        font-size: clamp(28px, 3vw, 42px);
+        font-weight: 950; color: var(--orange);
+        margin: 0; letter-spacing: -1px;
+        border-bottom: 1px solid rgba(255,255,255,.07);
+        padding-bottom: 18px;
+      }
+
+      .pdStatRow {
+        display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;
+      }
+      .pdStat {
+        display: flex; align-items: center; gap: 10px;
+        background: rgba(255,255,255,.04);
+        border: 1px solid rgba(255,255,255,.08);
+        border-radius: 14px; padding: 12px 14px;
+      }
+      .pdStat > span { font-size: 20px; }
+      .pdStat div p { margin: 0 0 2px; font-size: 10px; color: rgba(255,255,255,.38); text-transform: uppercase; letter-spacing: .6px; font-weight: 700; }
+      .pdStat div strong { font-size: 14px; color: white; font-weight: 800; }
+
+      .pdTabBar {
+        display: flex; gap: 0;
+        border-bottom: 1.5px solid rgba(255,255,255,.08);
+      }
+      .pdTabBtn {
+        padding: 10px 16px; border: none; background: transparent;
+        color: rgba(255,255,255,.4); font-weight: 700; font-size: 13px;
+        cursor: pointer;
+        border-bottom: 2px solid transparent; margin-bottom: -1.5px;
+        transition: color .2s, border-color .2s;
+        white-space: nowrap;
+      }
+      .pdTabBtn.active { color: var(--orange); border-bottom-color: var(--orange); }
+      .pdTabBtn:hover:not(.active) { color: rgba(255,255,255,.75); }
+
+      .pdTabBody { min-height: 100px; }
+      .pdPane { animation: tabFadeIn 0.25s ease; }
+      .pdDescText { color: rgba(255,255,255,.78); font-size: 14px; line-height: 1.85; white-space: pre-line; margin: 12px 0 0; }
+      .pdMapA {
+        display: inline-flex; align-items: center; gap: 6px;
+        margin-top: 14px; padding: 9px 18px;
+        background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.1);
+        border-radius: 999px; color: rgba(255,255,255,.8); text-decoration: none;
+        font-weight: 700; font-size: 13px; transition: background .2s;
+      }
+      .pdMapA:hover { background: rgba(255,138,0,.1); border-color: rgba(255,138,0,.3); color: var(--orange); }
+
+      .pdFeatGrid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 12px; }
+      .pdFeatItem {
+        display: flex; align-items: center; gap: 10px;
+        background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.07);
+        border-radius: 12px; padding: 12px 14px;
+      }
+      .pdFeatItem > span { font-size: 18px; flex-shrink: 0; }
+      .pdFeatItem div p { margin: 0 0 2px; font-size: 10px; color: rgba(255,255,255,.38); text-transform: uppercase; letter-spacing: .5px; font-weight: 700; }
+      .pdFeatItem div strong { font-size: 13px; color: white; font-weight: 800; }
+
+      .pdYatirimBox {
+        display: flex; gap: 14px; margin-top: 12px;
+        background: rgba(255,138,0,.06); border: 1px solid rgba(255,138,0,.15);
+        border-radius: 16px; padding: 18px;
+      }
+      .pdYatirimBox > span { font-size: 24px; flex-shrink: 0; }
+      .pdYatirimBox p { margin: 0; color: rgba(255,255,255,.8); font-size: 13px; line-height: 1.75; }
+
+      .pdCTAStack { display: flex; flex-direction: column; gap: 10px; }
+      .pdCtaWa {
         display: flex; align-items: center; justify-content: center; gap: 8px;
         background: #25D366; color: white; text-decoration: none;
         padding: 15px; border-radius: 14px; font-weight: 800; font-size: 15px;
         transition: transform .2s, box-shadow .2s;
       }
-      .pdSideWa:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(37,211,102,.4); }
-      .pdSideInsta {
+      .pdCtaWa:hover { transform: translateY(-2px); box-shadow: 0 8px 28px rgba(37,211,102,.4); }
+      .pdCtaInsta {
         display: flex; align-items: center; justify-content: center; gap: 8px;
         background: linear-gradient(135deg, #833ab4, #fd1d1d, #fcb045);
         color: white; text-decoration: none;
         padding: 13px; border-radius: 14px; font-weight: 800; font-size: 14px;
         transition: transform .2s;
       }
-      .pdSideInsta:hover { transform: translateY(-2px); }
-      .pdSideMap {
+      .pdCtaInsta:hover { transform: translateY(-2px); }
+      .pdCtaMap {
         display: flex; align-items: center; justify-content: center; gap: 8px;
-        background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.12);
-        color: white; text-decoration: none;
-        padding: 12px; border-radius: 14px; font-weight: 700; font-size: 13px; transition: background .2s;
+        background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.1);
+        color: rgba(255,255,255,.8); text-decoration: none;
+        padding: 12px; border-radius: 14px; font-weight: 700; font-size: 13px;
+        transition: background .2s;
       }
-      .pdSideMap:hover { background: rgba(255,255,255,.1); }
-      .pdSideActions { display: flex; gap: 8px; }
-      .pdSideActions button {
-        flex: 1; background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.1);
-        color: rgba(255,255,255,.7); border-radius: 12px; padding: 11px 8px;
-        font-size: 12px; font-weight: 700; cursor: pointer; transition: background .2s;
-      }
-      .pdSideActions button:hover { background: rgba(255,255,255,.1); color: white; }
+      .pdCtaMap:hover { background: rgba(255,255,255,.1); }
 
-      @media (max-width: 900px) {
-        .pdHero { height: 56vw; min-height: 240px; max-height: 420px; margin-top: 72px; }
-        .pdBody { grid-template-columns: 1fr; padding: 24px 16px 60px; gap: 24px; }
-        .pdRight { position: static; }
-        .pdQuickFacts { grid-template-columns: repeat(2, 1fr); }
-        .pdFeatureGrid { grid-template-columns: 1fr; }
-        .pdTrustGrid { grid-template-columns: 1fr; }
+      .pdSecRow { display: flex; gap: 8px; }
+      .pdSecRow button {
+        flex: 1; background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.09);
+        color: rgba(255,255,255,.65); border-radius: 12px; padding: 11px 8px;
+        font-size: 12px; font-weight: 700; cursor: pointer; transition: background .2s, color .2s;
+      }
+      .pdSecRow button:hover { background: rgba(255,255,255,.1); color: white; }
+
+      @media (max-width: 1024px) {
+        .pdWrap { grid-template-columns: 1fr; padding: 90px 20px 60px; gap: 32px; }
+        .pdInfoCol { position: static; }
+        .pdStatRow { grid-template-columns: repeat(2, 1fr); }
+        .pdPhotoGrid { grid-template-columns: repeat(4, 1fr); }
+      }
+      @media (max-width: 600px) {
+        .pdWrap { padding: 80px 14px 40px; gap: 20px; }
+        .pdPhotoGrid { grid-template-columns: repeat(3, 1fr); }
+        .pdFeatGrid { grid-template-columns: 1fr; }
       }
 
       /* ===== SPLASH SCREEN ===== */
